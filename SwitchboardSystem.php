@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.1 2008/03/23 18:57:40 nickpalmer Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.2 2008/03/23 19:15:41 nickpalmer Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,17 +23,11 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.1 $
+ * @version  $Revision: 1.2 $
  * @package  switchboard
  */
 
 global $gSwitchboardSystem;
-
-/*
-   A handy flag to turn on some validation of your transition table
-   when you are developing switchboard for a package.
-*/
-define( 'SWITCHBOARD_DEVELOPMENT', TRUE );
 
 require_once( LIBERTY_PKG_PATH . 'LibertyBase.php' );
 
@@ -73,8 +67,19 @@ class SwitchboardSystem extends LibertyBase {
 	 * $pFunction - The function that will get the callback
 	 *
 	 */
-    function registerSwitchboardListener( $pDeliveryStyle, $pFunction ) {
-		$this->mListeners[$pDeliveryStyle]['function'] = $pFunction;
+    function registerSwitchboardListener( $pPackage, $pDeliveryStyle, $pFunction ) {
+		if ( empty($this->mListener[$pDeliveryStyle]) ) {
+			if (func_exists($pFunction)) {
+				$this->mListeners[$pDeliveryStyle]['function'] = $pFunction;
+				$this->mListeners[$pDeliveryStyle]['package'] = $pPackage;
+			}
+			else {
+				$gBitSystem->fatalError("Package: ".$pPackage," registered a non-existant function listener: ".$func);
+			}
+		}
+		else {
+			$gBitSystem->fatalError("Switchboard Error: ".$pPackage." attempt to register an already registered delivery style: ".$pDelivertyStyle". Already registered by: ".$this->mListener[$pDeliveryStyle]['package']);
+		}
 	}
 
     /**
@@ -118,19 +123,17 @@ class SwitchboardSystem extends LibertyBase {
 			$event['message'] = $pMessageBody;
 
 			// Load users preferences
-			$usersPrefs = $this->loadUsersPreferences($pRecipients, $pPackage, $pEventType, $pContentId, TRUE);
+			$usersPrefs = $this->loadEffectivePrefs($pRecipients, $pPackage, $pEventType, $pContentId);
 
 			// Send the message for each recipient
 			foreach( $usersPrefs as $recipient => $prefs ) {
-				foreach( $mListeners as $package ) {
-					// Is this package active, and does the recipient use it?
-					if( $gBitSystem->isPackageActive( $package ) && !empty($prefs[$package])){
-						$func = $package['function'];
+				foreach( $mListeners as $style => $options ) {
+						$func = $options['function'];
 						if ( function_exists($func) ) {
-							$event['delivery_style'] = $prefs[$package]['delivery_style'];
+							$event['delivery_style'] =
 							$func($event);
 						} else {
-							$gBitSystem->fatalError("Package: ".$package," registered a non-existant function listener: ".$func);
+							$gBitSystem->fatalError("Package: ".$options['package']," registered a non-existant function listener: ".$func);
 						}
 					}
 
@@ -249,6 +252,11 @@ function switchboard_send_email() {
 	die;
 }
 
+function switchboard_send_digest() {
+	vd("CALLED SEND EMAIL");
+	die;
+}
+
 function switchboard_content_expunge(&$pObject, $pHash) {
 	if( $pObject->mContentTypeGuid == BITUSER_CONTENT_TYPE_GUID ) {
 		$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_prefs` WHERE `user_id` = ?";
@@ -263,12 +271,9 @@ function switchboard_content_expunge(&$pObject, $pHash) {
 // Initialize the switchboard system global if we haven't already
 if ( empty( $gSwitchboardSystem ) ) {
 	$gSwitchboardSystem = new SwitchboardSystem();
-	$gSwitchboardSystem->registerSwitchboardListener('email', 'switchboard_send_email');
-	$gSwitchboardSystem->registerSwitchboardListener('digest', 'switchboard_send_digest');
+	$gSwitchboardSystem->registerSwitchboardListener('switchboard', 'email', 'switchboard_send_email');
+	$gSwitchboardSystem->registerSwitchboardListener('switchboard', 'digest', 'switchboard_send_digest');
 
-	$gSwitchboardSystem->registerSwitchboardSender('switchboard', array('type1','type2'));
-	$gSwitchboardSystem->registerSwitchboardSender('group', array('grouptype1','grouptype2'));
-	$gSwitchboardSystem->registerSwitchboardSender('conference', array('type1','type2'));
 	// Store it in the context.
 	$gBitSmarty->assign_by_ref('gSwitchboardSystem', $gSwitchboardSystem);
 }
