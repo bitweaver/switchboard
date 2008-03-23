@@ -1,0 +1,1 @@
+{if $gBitUser->mUserId != -1 && !empty($gContent->mContentId) && $gSwitchboardSystem->senderIsRegistered($gContent->mType.handler_package)}<a href="{$smarty.const.SWITCHBOARD_PKG_URL}index.php?content_id={$gContent->mContentId}" title="Switchboard Preferences">{biticon ipackage="icons" iname="mail-send-receive" iexplain="Switchboard Preferences"}</a>{/if}
