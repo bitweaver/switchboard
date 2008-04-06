@@ -18,7 +18,7 @@
 						{jstab title=$switchboardContentTitles.$contentId|escape:html}
 							<h2>{$switchboardContentTitles.$contentId|escape:html}</h2>
 							{capture assign=prefs_table_value_prefix}SBContent[{$contentId}]{/capture}
-							{include file="bitpackage:switchboard/prefs_table.tpl" prefs_data=$contentPrefs}
+							{include file="bitpackage:switchboard/prefs_table.tpl" prefs_data=$contentPrefs includeDefaultSend=true}
 						{/jstab}
 					{/foreach}
 				{/jstabs}
