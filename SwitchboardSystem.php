@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.6 2008/04/06 18:07:31 nickpalmer Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.7 2008/04/06 20:45:19 spiderr Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.6 $
+ * @version  $Revision: 1.7 $
  * @package  switchboard
  */
 
@@ -553,10 +553,10 @@ function switchboard_content_expunge(&$pObject, $pHash) {
 	else {
 		$bindVars = array($pObject->mContentId);
 		$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_prefs` WHERE `content_id` = ?";
-		$this->mDb->query($query, $bindVars);
+		$pObject->mDb->query($query, $bindVars);
 
-		$query = "SELECT `message_id` FROM `.".BIT_DB_PREFIX."switchboard_queue` WHERE `content_id` = ?";
-		$messageIds = $this->mDb->getArray($query, $bindVars);
+		$query = "SELECT `message_id` FROM `".BIT_DB_PREFIX."switchboard_queue` WHERE `content_id` = ?";
+		$messageIds = $pObject->mDb->getArray($query, $bindVars);
 		if (count($messageIds)) {
 			$in = implode(',', array_fill(0, count($messageIds), '?'));
 			$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_recipients` WHERE `message_id` IN (".$in.")";
