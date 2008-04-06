@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.3 2008/03/24 11:59:40 nickpalmer Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.4 2008/04/06 11:08:17 nickpalmer Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.3 $
+ * @version  $Revision: 1.4 $
  * @package  switchboard
  */
 
@@ -66,11 +66,16 @@ class SwitchboardSystem extends LibertyBase {
 	 *
 	 * $pDeliveryStyles - The delivery style being registered
 	 * $pFunction - The function that will get the callback
+	 * $pOptions - Options for the listner. Currently supported options are:
+				useQueue - If true the message is queued and the handler is called from tendQueue instead
 	 *
 	 */
-    function registerSwitchboardListener( $pPackage, $pDeliveryStyle, $pFunction ) {
+    function registerSwitchboardListener( $pPackage, $pDeliveryStyle, $pFunction, $pOptions = NULL ) {
 		if ( empty($this->mListener[$pDeliveryStyle]) ) {
 			if (function_exists($pFunction)) {
+				if (is_array($pOptions)) {
+					$this->mListeners[$pDeliveryStyle] = $pOptions;
+				}
 				$this->mListeners[$pDeliveryStyle]['function'] = $pFunction;
 				$this->mListeners[$pDeliveryStyle]['package'] = $pPackage;
 			}
@@ -126,27 +131,108 @@ class SwitchboardSystem extends LibertyBase {
 			// Load users preferences
 			$usersPrefs = $this->loadEffectivePrefs($pRecipients, $pPackage, $pEventType, $pContentId);
 
-			// Send the message for each recipient
+			$messageId = NULL;
+			// Check each delivery style
 			foreach( $usersPrefs as $prefered_delivery => $users ) {
+				// Make sure the style is registered.
 				if( !empty($this->mListeners[$prefered_delivery]['function']) ) {
-					$func = $this->mListeners[$prefered_delivery]['function'];
-					if( function_exists($func) ) {
-						$func($event);
+					// Does this delivery style get handled at cron time?
+					if( $this->mListeners[$prefered_delivery]['useQueue'] ) {
+						// Have we stored this message yet?
+						if( $messageId == NULL ) {
+							$messageId = $this->queueMessage($event);
+						}
+						$this->queueDelivery($messageId, $users, $prefered_delivery);
 					} else {
-						$gBitSystem->fatalError("Package: ".$options['package']," registered a non-existant function listener: ".$func);
+						$func = $this->mListeners[$prefered_delivery]['function'];
+						if( function_exists($func) ) {
+							$func($event, $users);
+						} else {
+							bit_log_error("Package: ".$options['package']," registered a non-existant function listener: ".$func);
+						}
 					}
 				} else {
-					$gBitSystem->fatalError("Delivery Style: ".$prefered_delivery." for user: ". $prefs['login']." not registered!");
+					bit_log_error("Delivery Style: ".$prefered_delivery." for user: ". $prefs['login']." not registered!");
 				}
 			}
 		} else {
-			$gBitSystem->fatalError("Package: ".$pPackage." attempted to send message of type: ".$pEventType." but didn't register that it wanted to send this type.");
+			bit_log_error("Package: ".$pPackage." attempted to send message of type: ".$pEventType." but didn't register that it wanted to send this type.");
 		}
 	}
 
+	/**
+	 * Stores a message in the database and returns a message id.
+	 */
+	function queueMessage($event) {
+		global $gBitSystem, $gBitUser;
+
+		$messageStore['package'] = $event['package'];
+		$messageStore['event_type'] = $event['event_type'];
+		$messageStore['content_id'] = $event['content_id'];
+		$messageStore['queue_date'] = $gBitSystem->getUTCDate();
+		$messageStore['message_id'] = $this->mDb->GenID( 'switchboard_queue_id_seq' );
+		$messageStore['message'] = $event['message'];
+		$messageStore['sending_user_id'] = $gBitUser->mUserId;
+
+		$this->mDb->associateInsert(BIT_DB_PREFIX."switchboard_queue",
+									$messageStore);
+
+		return $messageStore['message_id'];
+	}
+
+	/*
+	 * Stores the delivery in the database
+	 */
+	function queueDelivery($pMessageId, $pUsers, $pDelivery) {
+		$deliveryStore['message_id'] = $pMessageId;
+		$deliveryStore['delivery_style'] = $pDelivery;
+		$table = BIT_DB_PREFIX."switchboard_recipients";
+		foreach($pUsers as $user_id) {
+			$deliveryStore['user_id'] = $user_id;
+			$this->mDb->associateInsert($table, $deliveryStore);
+		}
+	}
+
+	/**
+	 * Returns the queued messages for this user
+	 */
+	function listUserMessages($pUserId) {
+		$query = "SELECT d.*, q.* FROM `".BIT_DB_PREFIX."switchboard_recipients` d LEFT JOIN `".BIT_DB_PREFIX."switchboard_queue` q ON (d.`message_id` = q.`message_id`) WHERE d.`user_id` = ?";
+		$messages = $this->mDb->getArray($query, $pUserId);
+	}
+
+	/**
+	 * Returns the user_ids of pending deliveries as an associated array
+	 * These come out associated first by message id and then delivery style
+	 */
+	function listPendingDeliveries() {
+		$query = "SELECT q.*  FROM `".BIT_DB_PREFIX."switchboard_recipients` WHERE `complete_date` IS NULL";
+		$result = $this->mDb->query($query, $pUserId);
+		$ret = array();
+		while($res = $result->fetchRow()) {
+			$ret[$res['message_id']][$res['delivery_style']][] = $res['user_id'];
+		}
+
+		return $ret;
+	}
+
+	/**
+	 * Returns an array of messages with the given message IDs.
+	 */
+	function listMessages($pMessageIds) {
+		$query = "SELECT q.`message_id` AS hash_key, q.* FROM `".BIT_DB_PREFIX."switchboard_queue` WHERE q.`message_id` IN (". implode( ',',array_fill( 0,count( $pMessageIds ),'?' ) ). ") ";
+		$messages = $this->mDb->getAssoc($query, $pMessageIds);
+
+		return $messages;
+	}
+
+	/**
+	 * Loads the users default and content override preferences.
+	 * Returns an associative array with delivery_style as the key.
+	 */
 	function loadEffectivePrefs( $pRecipients, $pPackage, $pEventType, $pContentId = NULL) {
 		$defaults = $this->loadPrefs($pRecipients, $pPackage, $pEventType);
-		$overrides = $this->loadPrefs($pRecpients, $pContentId);
+		$overrides = $this->loadContentPrefs($pRecpients, $pContentId);
 
 		// Figure out each users effect prefs
 		$prefs = array();
@@ -166,6 +252,9 @@ class SwitchboardSystem extends LibertyBase {
 		return $ret;
 	}
 
+	/**
+	 * Loads the users preferences for a given content object.
+	 */
 	function loadContentPrefs( $pRecipients = NULL, $pContentId = NULL ) {
 		$selectSql = "SELECT sp.*, uu.`email`, uu.`login`, uu.`real_name`, lc.`title`, lc.`content_type_guid`  ";
 		$fromSql = "FROM `".BIT_DB_PREFIX."switchboard_prefs` sp ";
@@ -196,7 +285,9 @@ class SwitchboardSystem extends LibertyBase {
 	}
 
 	/**
-	 * Loads the recipients with interest registered for a given message
+	 * Loads the preferences for the given recipients, pacakge and event
+	 * If recipients is null then all users with registered preferences
+	 * are loaded.
 	 */
 	function loadPrefs( $pRecipients = NULL, $pPackage = NULL, $pEventType = NULL ) {
 		$selectSql = "SELECT sp.*, uu.`email`, uu.`login`, uu.`real_name` ";
@@ -227,6 +318,10 @@ class SwitchboardSystem extends LibertyBase {
 		return $prefs;
 	}
 
+	/**
+	 * Deletes a preference for the given user, either a default
+	 * or content permission.
+	 */
 	function deleteUserPref($pUserId, $pPackage, $pEventType, $pContentId = NULL) {
 		$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_prefs` WHERE `package` =? AND `event_type` = ? AND `user_id` = ? AND `content_id` ".(empty($pContentId) ? " IS NULL " : " = ?" );
 		$bindVars = array( $pPackage, $pEventType, $pUserId );
@@ -236,6 +331,9 @@ class SwitchboardSystem extends LibertyBase {
 		$this->mDb->query($query, $bindVars);
 	}
 
+	/**
+	 * Stores a preference for the user.
+	 */
 	function storeUserPref($pUserId, $pPackage, $pEventType, $pContentId = NULL, $pDeliveryStyle = NULL) {
 		$this->mDb->StartTrans();
 
@@ -249,68 +347,215 @@ class SwitchboardSystem extends LibertyBase {
 		$this->mDb->CompleteTrans();
 	}
 
+	/**
+	 * Checks if a package is registered as a sender.
+	 * $pSender - The package to check.
+	 */
 	function senderIsRegistered($pSender) {
 		return !empty($this->mSenders[$pSender]);
 	}
 
+	/**
+	 * Sends an email to the specified recipients.
+	 * This is a convenience method for packages
+	 * to be able to use the email sending features
+	 * found in this package.
+	 *
+	 * $pSubject - The Subject of the Email
+	 * $pRecipients - The Body of the Email
+	 * $pRecipients - An array of email addresses to send to
+	 **/
+	function sendEmail($pSubject, $pBody, $pRecipients){
+		$message['subject'] = $pSubject;
+		$message['body'] = $pBody;
+		$mailer = switchboard_build_mailer($message);
+
+		foreach ($pRecipients as $to) {
+			$mailer->AddAddress( $to );
+			if( !$mailer->Send() ) {
+				$gBitSystem->fatalError("Unable to send email: " . $mailer->ErrorInfo);
+			}
+			$mailer->ClearAddresses();
+		}
+	}
+
+	/**
+	 * Returns a PHPMailer with everything set except the recipients
+	 *
+	 * $pMessage['subject'] - The subject
+	 * $pMessage['message'] - The HTML body of the message
+	 * $pMessage['alt_message'] - The Non HTML body of the message
+	 */
+	function buildMailer($pMessage) {
+		require_once( UTIL_PKG_PATH.'phpmailer/class.phpmailer.php' );
+
+		$mailer = new PHPMailer();
+		$mailer->From     = $gBitSystem->getConfig( 'switchboard_sender_email', $gBitSystem->getConfig( 'site_sender_email', $_SERVER['SERVER_ADMIN'] ) );
+		$mailer->FromName = $gBitSystem->getConfig( 'switchboard_from', $gBitSystem->getConfig( 'site_title' ) );
+		$mailer->Host     = $gBitSystem->getConfig( 'bitmailer_servers', $gBitSystem->getConfig( 'kernel_server_name', '127.0.0.1' ) );
+		$mailer->Mailer   = $gBitSystem->getConfig( 'bitmailer_protocol', 'smtp' ); // Alternative to IsSMTP()
+		if( $gBitSystem->getConfig( 'bitmailer_smtp_username' ) ) {
+			$mailer->SMTPAuth = TRUE;
+			$mailer->Username = $gBitSystem->getConfig( 'bitmailer_smtp_username' );
+		}
+		if( $gBitSystem->getConfig( 'bitmailer_smtp_password' ) ) {
+			$mailer->Password = $gBitSystem->getConfig( 'bitmailer_smtp_password' );
+		}
+		$mailer->WordWrap = $gBitSystem->getConfig( 'bitmailer_word_wrap', 75 );
+		if( !$mailer->SetLanguage( $gBitLanguage->getLanguage(), UTIL_PKG_PATH.'phpmailer/language/' ) ) {
+			$mailer->SetLanguage( 'en' );
+		}
+		$mailer->ClearReplyTos();
+		$mailer->AddReplyTo( $gBitSystem->getConfig( 'bitmailer_from' ) );
+		if (empty($pMessage['subject'])) {
+			$mailer->Subject = $gBitSystem->getConfig('site_title', '').
+				(empty($pMessage['package']) ? '' : " : ".$pMessage['package']).
+				(empty($pMessage['type']) ? '' : " : ".$pMessage['type']);
+		}
+		else {
+			$mailer->Subject = $pMessage['subject'];
+		}
+
+		if (!empty($pMessage['message'])) {
+			$mailer->Body    = $pMessage['message'];
+			$mailer->IsHTML( TRUE );
+			if (!empty($pMessage['alt_message'])) {
+				$mailer->AltBody = $pMessage['alt_message'];
+			}
+			else {
+				$mailer->AltBody = '';
+			}
+		}
+		else {
+			$mailer->Body = $pMessage['alt_message'];
+			$mailer->IsHTML( FALSE );
+		}
+
+		return $mailer;
+	}
+
+	function tendQueue() {
+		// Get the list of pending deliveries
+		$msg_to_deliver = $this->listPendingDeliveries();
+		// If we have any
+		if (count($msg_to_deliver)) {
+			// Fetch the data about the messages
+			$messages = $this->listMessages(array_keys($msg_to_deliver));
+			// And figure out how to deliver them
+			foreach($msg_to_deliver as $message_id => $deliveries) {
+				foreach($delivereis as $delivery_style => $users) {
+					$func = $this->mListeners[$delivery_style]['function'];
+					if( function_exists($func) ) {
+						$func($event, $users);
+					} else {
+						bit_log_error("Package: ".$options['package']," registered a non-existant function listener: ".$func);
+					}
+				}
+			}
+		}
+	}
 }
 
-
+/** Private! Sends a digest message */
 function switchboard_send_digest($pSwitchboardEvent, $pRecipients) {
-	vd("CALLED SEND EMAIL");
-	// TODO: Add the event to long term storage for processing later.
+	// For each recipient (we ignore the event triggering the digest)
+	foreach ($pRecipients as $recipient) {
+		$user = new BitUser($recipient);
+		$user->load();
+
+		// Has it been long enough for a digest for this user?
+		$last_digest = $user->getPreference('switchboard_last_digest');
+		if (empty($last_digest)) {
+			$user->storePreference('switchboard_last_digest', $gBitSystem->getUTCTime());
+		}
+		// @TODO: Need to make admin for digest_period
+		else if ($gBitSystem->getUTCTime() >= $last_digest + $user->getPreference('switchboard_digest_period', 24 * 60 * 60)) {
+			// Get all the messages pending for this user
+			$messages = $gSwitchboardSystem->listUserMessages($recipient);
+
+			// This shouldn't be empty because of $pSwitchboardEvent but...
+			if (!empty($messages)) {
+				$deleteVars = array();
+				$message = '';
+
+				// Build up the digest
+				foreach ($messages as $message) {
+					$deleteVars[] = $message['message_id'];
+					$message = $message['message'];
+					$message = "<br/><hr><br/>";
+				}
+
+				// Send the message
+				// @TODO: Make a better title.
+				$mailer = $gSwitchboardSystem->buildMailer(array('subject' => 'Digest From: '.$gBitSystem->getConfig('site_title'),
+																 'body' => $message));
+				$mailer->AddAddress( $user->mInfo['email'], $user->mInfo['login'] );
+				if( !$mailer->Send() ) {
+					$gBitSystem->fatalError("Unable to send notification: " . $mailer->ErrorInfo);
+				}
+
+				// Delete the deliveries from the queue
+				$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_recipients` WHERE `message_id` IN (".(implode(",", array_fill(0,count($deleteVars), "?"))).") AND `user_id` = ?";
+				$deleteVars[] = $recipient;
+				$this->mDb->query($query, $deleteVars);
+
+				// @TODO: Check and update the complete_date
+
+				// And remember the users digest last time.
+				$user->storePreference('switchboard_last_digest', $gBitSystem->getUTCTime());
+			}
+		}
+	}
 }
 
-function switchboard_build_digest() {
-	// TODO: Build a digest message for each user with something in the queue
-	// TODO: Write a cron job that sets up and then calls this function.
-	// Send the message
-	switchboard_send_email($message, $recipients);
-}
-
+/** Private! Sends an email message */
 function switchboard_send_email($pMessage, $pRecipients) {
-	require_once( UTIL_PKG_PATH.'phpmailer/class.phpmailer.php' );
+	global $gSwitchboardSystem;
 
-	$mailer = new PHPMailer();
-	$mailer->From     = $gBitSystem->getConfig( 'bitmailer_sender_email', $gBitSystem->getConfig( 'site_sender_email', $_SERVER['SERVER_ADMIN'] ) );
-	$mailer->FromName = $gBitSystem->getConfig( 'bitmailer_from', $gBitSystem->getConfig( 'site_title' ) );
-	$mailer->Host     = $gBitSystem->getConfig( 'bitmailer_servers', $gBitSystem->getConfig( 'kernel_server_name', '127.0.0.1' ) );
-	$mailer->Mailer   = $gBitSystem->getConfig( 'bitmailer_protocol', 'smtp' ); // Alternative to IsSMTP()
-	if( $gBitSystem->getConfig( 'bitmailer_smtp_username' ) ) {
-		$mailer->SMTPAuth = TRUE;
-		$mailer->Username = $gBitSystem->getConfig( 'bitmailer_smtp_username' );
-	}
-	if( $gBitSystem->getConfig( 'bitmailer_smtp_password' ) ) {
-		$mailer->Password = $gBitSystem->getConfig( 'bitmailer_smtp_password' );
-	}
-	$mailer->WordWrap = $gBitSystem->getConfig( 'bitmailer_word_wrap', 75 );
-	if( !$mailer->SetLanguage( $gBitLanguage->getLanguage(), UTIL_PKG_PATH.'phpmailer/language/' ) ) {
-		$mailer->SetLanguage( 'en' );
-	}
-	$mailer->ClearReplyTos();
-	$mailer->AddReplyTo( $gBitSystem->getConfig( 'bitmailer_from' ) );
-	$mailer->Body    = $pMessage['message'];
-	$mailer->Subject = empty($pMessage['subject']) ? $gBitSystem->getConfig('site_title', '')." : ".$pMessage['package']." : ".$pMessage['type'] : $pMessage['subject'];
-	$mailer->IsHTML( TRUE );
-	$mailer->AltBody = '';
+	$mailer = $gSwitchboardSystem->buildMailer($pMessage);
 
+	/* Send each message one by one. */
 	foreach ($pRecipients as $to) {
-		$mailer->AddAddress( $to['email'], empty($to["real_name"]) ? $to["login"] : $to['real_name']);
-	}
-
-	if( !$mailer->Send() ) {
-		$gBitSystem->fatalError("Unable to send notification: " . $mailer->ErrorInfo);
+		/* @TODO: Make this load login and real name and add that too! */
+		$mailer->AddAddress( $to );
+		if( !$mailer->Send() ) {
+			$gBitSystem->fatalError("Unable to send notification: " . $mailer->ErrorInfo);
+		}
+		$mailer->ClearAddresses();
 	}
 }
 
 function switchboard_content_expunge(&$pObject, $pHash) {
 	if( $pObject->mContentTypeGuid == BITUSER_CONTENT_TYPE_GUID ) {
+		$bindVars = array($pObject->mUserId);
 		$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_prefs` WHERE `user_id` = ?";
-		$this->mDb->query($query, array($pObject->mUserId));
+		$this->mDb->query($query, $bindVars);
+		$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_recipients` WHERE `user_id` = ?";
+		$this->mDb->query($query, $bindVars);
+		$query = "SELECT `message_id` FROM `.".BIT_DB_PREFIX."switchboard_queue` WHERE `user_id` = ?";
+		$messageIds = $this->mDb->getArray($query, $bindVars);
+		if (count($messageIds)) {
+			$in = implode(',', array_fill(0, count($messageIds), '?'));
+			$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_recipients` WHERE `message_id` IN (".$in.")";
+			$this->mDb->query($query, $messageIds);
+			$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_queue` WHERE `message_id` IN (".$in.")";
+			$this->mDb->query($query, $messageIds);
+		}
 	}
 	else {
+		$bindVars = array($pObject->mContentId);
 		$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_prefs` WHERE `content_id` = ?";
-		$this->mDb->query($query, array($pObject->mContentId));
+		$this->mDb->query($query, $bindVars);
+
+		$query = "SELECT `message_id` FROM `.".BIT_DB_PREFIX."switchboard_queue` WHERE `content_id` = ?";
+		$messageIds = $this->mDb->getArray($query, $bindVars);
+		if (count($messageIds)) {
+			$in = implode(',', array_fill(0, count($messageIds), '?'));
+			$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_recipients` WHERE `message_id` IN (".$in.")";
+			$this->mDb->query($query, $messageIds);
+			$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_queue` WHERE `message_id` IN (".$in.")";
+			$this->mDb->query($query, $messageIds);
+		}
 	}
 }
 
@@ -318,7 +563,7 @@ function switchboard_content_expunge(&$pObject, $pHash) {
 if ( empty( $gSwitchboardSystem ) ) {
 	$gSwitchboardSystem = new SwitchboardSystem();
 	$gSwitchboardSystem->registerSwitchboardListener('switchboard', 'email', 'switchboard_send_email');
-	$gSwitchboardSystem->registerSwitchboardListener('switchboard', 'digest', 'switchboard_send_digest');
+	$gSwitchboardSystem->registerSwitchboardListener('switchboard', 'digest', 'switchboard_send_digest', array('useQueue' => true));
 
 	// Store it in the context.
 	$gBitSmarty->assign_by_ref('gSwitchboardSystem', $gSwitchboardSystem);
