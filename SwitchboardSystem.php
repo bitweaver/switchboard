@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.4 2008/04/06 11:08:17 nickpalmer Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.5 2008/04/06 12:26:31 nickpalmer Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.4 $
+ * @version  $Revision: 1.5 $
  * @package  switchboard
  */
 
@@ -89,13 +89,8 @@ class SwitchboardSystem extends LibertyBase {
 	}
 
     /**
-	 * Register the callback function for a given package.
-	 *
-	 * The function should have the following API:
-	 * handleSwitchboardNotification($pSwitchboardEvent) Where
-	 * $pSwitchboardEvent is the array with data on the event
-	 *
-	 * $pTypes is the event types this package will send.
+	 * Registers a sender of events.
+	 * $pTypes is the array of event types this package will send.
 	 *
 	 */
     function registerSwitchboardSender( $pPackage, $pTypes ) {
@@ -259,7 +254,7 @@ class SwitchboardSystem extends LibertyBase {
 		$selectSql = "SELECT sp.*, uu.`email`, uu.`login`, uu.`real_name`, lc.`title`, lc.`content_type_guid`  ";
 		$fromSql = "FROM `".BIT_DB_PREFIX."switchboard_prefs` sp ";
 		$joinSql = "LEFT JOIN `".BIT_DB_PREFIX."liberty_content` lc ON (sp.`content_id` = lc.`content_id`) ";
-		$joinSql .= "LEFT JOIN `".BIT_DB_PREFIX."users_users` lc ON (sp.`user_id` = uu.`user_id`) ";
+		$joinSql .= "LEFT JOIN `".BIT_DB_PREFIX."users_users` uu ON (sp.`user_id` = uu.`user_id`) ";
 		$whereSql = "WHERE sp.`content_id` ";
 		$bindVars = array();
 
@@ -292,7 +287,7 @@ class SwitchboardSystem extends LibertyBase {
 	function loadPrefs( $pRecipients = NULL, $pPackage = NULL, $pEventType = NULL ) {
 		$selectSql = "SELECT sp.*, uu.`email`, uu.`login`, uu.`real_name` ";
 		$fromSql = "FROM `".BIT_DB_PREFIX."switchboard_prefs` sp ";
-		$joinSql = "LEFT JOIN `".BIT_DB_PREFIX."users_users` lc ON (sp.`user_id` = uu.`user_id`) ";
+		$joinSql = "LEFT JOIN `".BIT_DB_PREFIX."users_users` uu ON (sp.`user_id` = uu.`user_id`) ";
 		$whereSql = 'WHERE sp.`content_id` IS NULL ';
 		$bindVars = array();
 		if (!empty($pPackage)) {
@@ -335,24 +330,35 @@ class SwitchboardSystem extends LibertyBase {
 	 * Stores a preference for the user.
 	 */
 	function storeUserPref($pUserId, $pPackage, $pEventType, $pContentId = NULL, $pDeliveryStyle = NULL) {
-		$this->mDb->StartTrans();
+		if ($this->senderIsRegistered($pPackage, $pEventType)) {
+			$this->mDb->StartTrans();
 
-		$this->deleteUserPref($pUserId, $pPackage, $pEventType, $pContentId);
+			$this->deleteUserPref($pUserId, $pPackage, $pEventType, $pContentId);
 
-		$query = "INSERT INTO `".BIT_DB_PREFIX."switchboard_prefs` (`package`, `event_type`, `user_id`, `content_id`, `delivery_style`) VALUES (?, ?, ?, ?, ?)";
-		$bindVars = array( $pPackage, $pEventType, $pUserId, $pContentId, $pDeliveryStyle );
+			$query = "INSERT INTO `".BIT_DB_PREFIX."switchboard_prefs` (`package`, `event_type`, `user_id`, `content_id`, `delivery_style`) VALUES (?, ?, ?, ?, ?)";
+			$bindVars = array( $pPackage, $pEventType, $pUserId, $pContentId, $pDeliveryStyle );
 
-		$this->mDb->query($query, $bindVars);
+			$this->mDb->query($query, $bindVars);
 
-		$this->mDb->CompleteTrans();
+			$this->mDb->CompleteTrans();
+		}
+		else {
+			global $gBitSystem;
+			$gBitSystem->fatalError("Attempt to register a perference for a package that is not registered.");
+		}
 	}
 
 	/**
 	 * Checks if a package is registered as a sender.
 	 * $pSender - The package to check.
 	 */
-	function senderIsRegistered($pSender) {
-		return !empty($this->mSenders[$pSender]);
+	function senderIsRegistered($pSender, $pType = NULL) {
+		if (!empty($pType)) {
+			return !empty($this->mSenders[$pSender]) && in_array($pType, $this->mSenders[$pSender]['types']);
+		}
+		else {
+			return !empty($this->mSenders[$pSender]);
+		}
 	}
 
 	/**

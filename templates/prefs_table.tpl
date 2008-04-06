@@ -16,10 +16,10 @@
 					<td>
 						<ul>
 							{if $includeDefaultSend}
-								<li>{tr}Default{/tr}: <input type="radio" name="{$prefs_table_value_prefix}[{$package}][{$type}]" value="default" {if $prefs_data.$package.$type.delivery_style == 'default'}checked{/if} /></li>
+								<li>{tr}Default{/tr}: <input type="radio" name="{$prefs_table_value_prefix}[{$package}][{$type}]" value="default" {if empty($prefs_data.$package.$type.delivery_style)}checked{/if} /></li>
 							{/if}
 
-							<li>{tr}Don't Send{/tr}: <input type="radio" name="{$prefs_table_value_prefix}[{$package}][{$type}]" value="none" {if empty($prefs_data.$package.$type) || $prefs_data.$package.$type.delivery_style == 'none'}checked{/if} /></li>
+							<li>{tr}Don't Send{/tr}: <input type="radio" name="{$prefs_table_value_prefix}[{$package}][{$type}]" value="none" {if (!$includeDefaultSend && empty($prefs_data.$package.$type)) || $prefs_data.$package.$type.delivery_style == 'none'}checked{/if} /></li>
 
 							{foreach from=$gSwitchboardSystem->mListeners key=style item=options}
 								<li>{$style|capitalize:true} <input type="radio" name="{$prefs_table_value_prefix}[{$package}][{$type}]" value="{$style}" {if $prefs_data.$package.$type.delivery_style == $style}checked{/if}/></li>
