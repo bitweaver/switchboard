@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.5 2008/04/06 12:26:31 nickpalmer Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.6 2008/04/06 18:07:31 nickpalmer Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.5 $
+ * @version  $Revision: 1.6 $
  * @package  switchboard
  */
 
@@ -105,19 +105,13 @@ class SwitchboardSystem extends LibertyBase {
 	 * $pRecipients - An array of userIds of recipients. If null all with registered preference will be sent a message
 	 * $pContentId - The content_id of the object that triggered this message.
 	 * $pDataHash - The message that is being sent.
-	 *				Currently supported are: body and subject
+	 *				Currently supported are: message and subject
 	 */
 	function sendEvent($pPackage, $pEventType, $pContentId, $pDataHash, $pRecipients = NULL) {
 
 		global $gBitSystem, $gBitUser;
-
-		// Only registered users get messages routed.
-		if( !$gBitUser->isRegistered() ) {
-			return;
-		}
-
 		// Make sure event is registered so we can do prefs for them. This is for devs really
-		if( !empty($this->mSenders[$pPackage]) && !empty($this->mSenders[$pPackage]['types'][$pEventType]) ) {
+		if( !empty($this->mSenders[$pPackage]) && in_array($pEventType, $this->mSenders[$pPackage]['types']) ) {
 			$event = $pDataHash;
 			$event['package'] = $pPackage;
 			$event['content_id'] = $pContentId;
@@ -125,14 +119,13 @@ class SwitchboardSystem extends LibertyBase {
 
 			// Load users preferences
 			$usersPrefs = $this->loadEffectivePrefs($pRecipients, $pPackage, $pEventType, $pContentId);
-
 			$messageId = NULL;
 			// Check each delivery style
 			foreach( $usersPrefs as $prefered_delivery => $users ) {
 				// Make sure the style is registered.
 				if( !empty($this->mListeners[$prefered_delivery]['function']) ) {
 					// Does this delivery style get handled at cron time?
-					if( $this->mListeners[$prefered_delivery]['useQueue'] ) {
+					if( isset($this->mListeners[$prefered_delivery]['useQueue']) ) {
 						// Have we stored this message yet?
 						if( $messageId == NULL ) {
 							$messageId = $this->queueMessage($event);
@@ -143,15 +136,15 @@ class SwitchboardSystem extends LibertyBase {
 						if( function_exists($func) ) {
 							$func($event, $users);
 						} else {
-							bit_log_error("Package: ".$options['package']," registered a non-existant function listener: ".$func);
+							$gBitSystem->fatalError("Package: ".$options['package']," registered a non-existant function listener: ".$func);
 						}
 					}
 				} else {
-					bit_log_error("Delivery Style: ".$prefered_delivery." for user: ". $prefs['login']." not registered!");
+					$gBitSystem->fatalError("Delivery Style: ".$prefered_delivery." for user: ". $prefs['login']." not registered!");
 				}
 			}
 		} else {
-			bit_log_error("Package: ".$pPackage." attempted to send message of type: ".$pEventType." but didn't register that it wanted to send this type.");
+			$gBitSystem->fatalError("Package: ".$pPackage." attempted to send message of type: ".$pEventType." but didn't register that it wanted to send this type.");
 		}
 	}
 
@@ -227,7 +220,7 @@ class SwitchboardSystem extends LibertyBase {
 	 */
 	function loadEffectivePrefs( $pRecipients, $pPackage, $pEventType, $pContentId = NULL) {
 		$defaults = $this->loadPrefs($pRecipients, $pPackage, $pEventType);
-		$overrides = $this->loadContentPrefs($pRecpients, $pContentId);
+		$overrides = $this->loadContentPrefs($pRecipients, $pContentId);
 
 		// Figure out each users effect prefs
 		$prefs = array();
@@ -241,7 +234,7 @@ class SwitchboardSystem extends LibertyBase {
 		// Now reorder by delivery style
 		$ret = array();
 		foreach ($prefs as $user_id => $data) {
-			$ret[$data['delivery_style']] = $data;
+			$ret[$data['delivery_style']][$data['user_id']] = $data;
 		}
 
 		return $ret;
@@ -291,11 +284,11 @@ class SwitchboardSystem extends LibertyBase {
 		$whereSql = 'WHERE sp.`content_id` IS NULL ';
 		$bindVars = array();
 		if (!empty($pPackage)) {
-			$whereSql .= "AND `package` = ? ";
+			$whereSql .= "AND sp.`package` = ? ";
 			$bindVars[] = $pPackage;
 		}
 		if (!empty($pEventType)) {
-			$whereSql = "AND `event_type` = ? ";
+			$whereSql .= "AND sp.`event_type` = ? ";
 			$bindVars[] = $pEventType;
 		}
 
@@ -309,7 +302,6 @@ class SwitchboardSystem extends LibertyBase {
 		}
 
 		$prefs = $this->mDb->getArray($selectSql.$fromSql.$joinSql.$whereSql, $bindVars);
-
 		return $prefs;
 	}
 
@@ -368,20 +360,27 @@ class SwitchboardSystem extends LibertyBase {
 	 * found in this package.
 	 *
 	 * $pSubject - The Subject of the Email
-	 * $pRecipients - The Body of the Email
-	 * $pRecipients - An array of email addresses to send to
+	 * $pBody - The Body of the Email
+	 * $pRecipients - An associative array with keys for email and optionally login and real_name
 	 **/
 	function sendEmail($pSubject, $pBody, $pRecipients){
 		$message['subject'] = $pSubject;
-		$message['body'] = $pBody;
+		$message['message'] = $pBody;
 		$mailer = switchboard_build_mailer($message);
 
 		foreach ($pRecipients as $to) {
-			$mailer->AddAddress( $to );
-			if( !$mailer->Send() ) {
-				$gBitSystem->fatalError("Unable to send email: " . $mailer->ErrorInfo);
+			if( !$empty($to['email'] ) ) {
+				if (isset($to['real_name']) || isset($to['login'])) {
+					$mailer->AddAddress( $to['email'], empty($to['real_name']) ? $to['login'] : $to['real_name'] );
+				}
+				else {
+					$mailer->AddAddress( $to['email'] );
+				}
+				if( !$mailer->Send() ) {
+					$gBitSystem->fatalError("Unable to send email: " . $mailer->ErrorInfo);
+				}
+				$mailer->ClearAddresses();
 			}
-			$mailer->ClearAddresses();
 		}
 	}
 
@@ -393,6 +392,8 @@ class SwitchboardSystem extends LibertyBase {
 	 * $pMessage['alt_message'] - The Non HTML body of the message
 	 */
 	function buildMailer($pMessage) {
+		global $gBitSystem, $gBitLanguage;
+
 		require_once( UTIL_PKG_PATH.'phpmailer/class.phpmailer.php' );
 
 		$mailer = new PHPMailer();
@@ -432,7 +433,7 @@ class SwitchboardSystem extends LibertyBase {
 				$mailer->AltBody = '';
 			}
 		}
-		else {
+		elseif (!empty($pmessage['alt_message'])) {
 			$mailer->Body = $pMessage['alt_message'];
 			$mailer->IsHTML( FALSE );
 		}
@@ -494,7 +495,7 @@ function switchboard_send_digest($pSwitchboardEvent, $pRecipients) {
 				// Send the message
 				// @TODO: Make a better title.
 				$mailer = $gSwitchboardSystem->buildMailer(array('subject' => 'Digest From: '.$gBitSystem->getConfig('site_title'),
-																 'body' => $message));
+																 'message' => $message));
 				$mailer->AddAddress( $user->mInfo['email'], $user->mInfo['login'] );
 				if( !$mailer->Send() ) {
 					$gBitSystem->fatalError("Unable to send notification: " . $mailer->ErrorInfo);
@@ -516,18 +517,19 @@ function switchboard_send_digest($pSwitchboardEvent, $pRecipients) {
 
 /** Private! Sends an email message */
 function switchboard_send_email($pMessage, $pRecipients) {
-	global $gSwitchboardSystem;
+	global $gSwitchboardSystem, $gBitSystem;
 
 	$mailer = $gSwitchboardSystem->buildMailer($pMessage);
 
 	/* Send each message one by one. */
 	foreach ($pRecipients as $to) {
-		/* @TODO: Make this load login and real name and add that too! */
-		$mailer->AddAddress( $to );
-		if( !$mailer->Send() ) {
-			$gBitSystem->fatalError("Unable to send notification: " . $mailer->ErrorInfo);
+		if( !empty($to['email']) ) {
+			$mailer->AddAddress( $to['email'], empty($to['real_name']) ? $to['login'] : $to['real_name'] );
+			if( !$mailer->Send() ) {
+				$gBitSystem->fatalError("Unable to send notification: " . $mailer->ErrorInfo);
+			}
+			$mailer->ClearAddresses();
 		}
-		$mailer->ClearAddresses();
 	}
 }
 
