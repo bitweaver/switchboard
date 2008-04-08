@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.7 2008/04/06 20:45:19 spiderr Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.8 2008/04/08 21:02:11 wjames5 Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.7 $
+ * @version  $Revision: 1.8 $
  * @package  switchboard
  */
 
@@ -364,12 +364,13 @@ class SwitchboardSystem extends LibertyBase {
 	 * $pRecipients - An associative array with keys for email and optionally login and real_name
 	 **/
 	function sendEmail($pSubject, $pBody, $pRecipients){
+		global $gBitSystem;
 		$message['subject'] = $pSubject;
 		$message['message'] = $pBody;
-		$mailer = switchboard_build_mailer($message);
+		$mailer = $this->buildMailer($message);
 
 		foreach ($pRecipients as $to) {
-			if( !$empty($to['email'] ) ) {
+			if( !empty($to['email'] ) ) {
 				if (isset($to['real_name']) || isset($to['login'])) {
 					$mailer->AddAddress( $to['email'], empty($to['real_name']) ? $to['login'] : $to['real_name'] );
 				}
