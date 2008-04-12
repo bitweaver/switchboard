@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.8 2008/04/08 21:02:11 wjames5 Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.9 2008/04/12 06:08:43 spiderr Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.8 $
+ * @version  $Revision: 1.9 $
  * @package  switchboard
  */
 
@@ -363,18 +363,22 @@ class SwitchboardSystem extends LibertyBase {
 	 * $pBody - The Body of the Email
 	 * $pRecipients - An associative array with keys for email and optionally login and real_name
 	 **/
-	function sendEmail($pSubject, $pBody, $pRecipients){
+	function sendEmail($pSubject, $pBody, $pRecipients, $pHeaders=array() ){
 		global $gBitSystem;
+		$message = $pHeaders;
 		$message['subject'] = $pSubject;
 		$message['message'] = $pBody;
 		$mailer = $this->buildMailer($message);
+
+		if( is_string( $pRecipients ) ) {
+			$pRecipients = array( array( 'email' => $pRecipients ) );
+		}
 
 		foreach ($pRecipients as $to) {
 			if( !empty($to['email'] ) ) {
 				if (isset($to['real_name']) || isset($to['login'])) {
 					$mailer->AddAddress( $to['email'], empty($to['real_name']) ? $to['login'] : $to['real_name'] );
-				}
-				else {
+				} else {
 					$mailer->AddAddress( $to['email'] );
 				}
 				if( !$mailer->Send() ) {
@@ -398,8 +402,11 @@ class SwitchboardSystem extends LibertyBase {
 		require_once( UTIL_PKG_PATH.'phpmailer/class.phpmailer.php' );
 
 		$mailer = new PHPMailer();
-		$mailer->From     = $gBitSystem->getConfig( 'switchboard_sender_email', $gBitSystem->getConfig( 'site_sender_email', $_SERVER['SERVER_ADMIN'] ) );
-		$mailer->FromName = $gBitSystem->getConfig( 'switchboard_from', $gBitSystem->getConfig( 'site_title' ) );
+		$mailer->From     = !empty( $pMessage['from'] ) ? $pMessage['from'] : $gBitSystem->getConfig( 'switchboard_sender_email', $gBitSystem->getConfig( 'site_sender_email', $_SERVER['SERVER_ADMIN'] ) );
+		$mailer->FromName = !empty( $pMessage['from_name'] ) ? $pMessage['from_name'] : $gBitSystem->getConfig( 'switchboard_from', $gBitSystem->getConfig( 'site_title' ) );
+		if( !empty( $pMessage['sender'] ) ) {
+			$mailer->Sender = $pMessage['sender'];
+		}
 		$mailer->Host     = $gBitSystem->getConfig( 'bitmailer_servers', $gBitSystem->getConfig( 'kernel_server_name', '127.0.0.1' ) );
 		$mailer->Mailer   = $gBitSystem->getConfig( 'bitmailer_protocol', 'smtp' ); // Alternative to IsSMTP()
 		if( $gBitSystem->getConfig( 'bitmailer_smtp_username' ) ) {
