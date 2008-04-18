@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.9 2008/04/12 06:08:43 spiderr Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.10 2008/04/18 16:05:44 wjames5 Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.9 $
+ * @version  $Revision: 1.10 $
  * @package  switchboard
  */
 
@@ -528,13 +528,12 @@ function switchboard_send_email($pMessage, $pRecipients) {
 	global $gSwitchboardSystem, $gBitSystem;
 
 	$mailer = $gSwitchboardSystem->buildMailer($pMessage);
-
 	/* Send each message one by one. */
 	foreach ($pRecipients as $to) {
 		if( !empty($to['email']) ) {
 			$mailer->AddAddress( $to['email'], empty($to['real_name']) ? $to['login'] : $to['real_name'] );
 			if( !$mailer->Send() ) {
-				$gBitSystem->fatalError("Unable to send notification: " . $mailer->ErrorInfo);
+				bit_log_error( "Switchboard unable to send notification: " . $mailer->ErrorInfo );
 			}
 			$mailer->ClearAddresses();
 		}
