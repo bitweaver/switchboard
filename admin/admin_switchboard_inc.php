@@ -1,12 +1,12 @@
 <?php
 
 $formSwitchboardFeatures = array(
-	"switchboard_sender_email" => array(
+	"bitmailer_sender_email" => array(
 		'label' => 'From Email',
 		'note' => 'If empty, it will default to the site Sender Email',
 		'default' => $gBitSystem->getConfig( 'site_sender_email', $_SERVER['SERVER_ADMIN'] ),
 	),
-	"switchboard_from" => array(
+	"bitmailer_from" => array(
 		'label' => 'From Name',
 		'note' => '',
 		'default' => $gBitSystem->getConfig( 'siteTitle' ),
