@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.11 2008/04/19 16:47:54 spiderr Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.12 2008/06/18 09:27:39 lsces Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,14 +23,21 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.11 $
+ * @version  $Revision: 1.12 $
  * @package  switchboard
  */
 
+/**
+ * Initialization
+ */
 global $gSwitchboardSystem;
-
 require_once( KERNEL_PKG_PATH . 'BitMailer.php' );
 
+/**
+ * SwitchboardSystem 
+ * 
+ * @uses BitMailer
+ */
 class SwitchboardSystem extends BitMailer {
 
 	/**
