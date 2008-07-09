@@ -20,7 +20,7 @@ $tables = array(
 		sending_user_id I4,
 		queue_date I8 NOTNULL,
   		complete_date I8,
-		message X NOTNULL
+		q_message X NOTNULL
 		CONSTRAINT '
 			, CONSTRAINT `switchboard_queue_content_ref` FOREIGN KEY (`content_id`) REFERENCES `".BIT_DB_PREFIX."liberty_content` (`content_id`)
 			, CONSTRAINT `switchboard_queue_user_ref` FOREIGN KEY (`sending_user_id`) REFERENCES `".BIT_DB_PREFIX."users_users` (`user_id`) '
@@ -31,7 +31,7 @@ $tables = array(
 		user_id I4 PRIMARY,
 		delivery_style C(64) NOTNULL
 		CONSTRAINT '
-			, CONSTRAINT `switchboard_recipients_message_ref` FOREIGN KEY (`message_id`) REFERENCES `".BIT_DB_PREFIX."switchboard_queue` (`message_id`)
+			, CONSTRAINT `switchboard_recipients_m_ref` FOREIGN KEY (`message_id`) REFERENCES `".BIT_DB_PREFIX."switchboard_queue` (`message_id`)
 			, CONSTRAINT `switchboard_recipients_user_ref` FOREIGN KEY (`user_id`) REFERENCES `".BIT_DB_PREFIX."users_users` (`user_id`) '
 	",
 );
