@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.13 2008/06/18 10:10:08 lsces Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.14 2008/07/31 21:49:52 wjames5 Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.13 $
+ * @version  $Revision: 1.14 $
  * @package  switchboard
  */
 
@@ -128,7 +128,7 @@ class SwitchboardSystem extends BitMailer {
 			$usersPrefs = $this->loadEffectivePrefs($pRecipients, $pPackage, $pEventType, $pContentId);
 			$messageId = NULL;
 			// Check each delivery style
-			foreach( $usersPrefs as $prefered_delivery => $users ) {
+  			foreach( $usersPrefs as $prefered_delivery => $users ) {
 				// Make sure the style is registered.
 				if( !empty($this->mListeners[$prefered_delivery]['function']) ) {
 					// Does this delivery style get handled at cron time?
@@ -147,7 +147,11 @@ class SwitchboardSystem extends BitMailer {
 						}
 					}
 				} else {
-					$gBitSystem->fatalError("Delivery Style: ".$prefered_delivery." for user: ". $prefs['login']." not registered!");
+					$user_list = '';
+					foreach ($users as $user) {
+						$user_list .= $user['login']." ";
+					}
+					$gBitSystem->fatalError("Delivery Style: ".$prefered_delivery." for users: ". $user_list." not registered!");
 				}
 			}
 		} else {
