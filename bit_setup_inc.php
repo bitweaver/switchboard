@@ -3,7 +3,7 @@
  * @package switchboard
  */
 
-global $gBitSystem, $gLibertySystem;
+global $gBitSystem, $gLibertySystem, $gBitThemes;
 
 $registerHash = array(
 	'package_name' => 'switchboard',
@@ -33,4 +33,7 @@ if( $gBitSystem->isPackageActive( 'switchboard' ) ) {
 
 	require_once( 'SwitchboardSystem.php' );
 }
+
+$gBitThemes->loadCss( SWITCHBOARD_PKG_PATH.'switchboard.css' );
+
 ?>
