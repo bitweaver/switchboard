@@ -22,16 +22,26 @@ if( $gBitSystem->isPackageActive( 'switchboard' ) ) {
 	$gBitSystem->registerAppMenu( $menuHash );
 	*/
 
-	$gLibertySystem->registerService(
-		SWITCHBOARD_PKG_NAME, SWITCHBOARD_PKG_NAME, array(
-		'content_expunge_function'  => 'switchboard_content_expunge',
-		'content_icon_tpl'           => 'bitpackage:switchboard/service_content_icon_inc.tpl',
-	) );
+	$gLibertySystem->registerService( SWITCHBOARD_PKG_NAME, SWITCHBOARD_PKG_NAME,
+		array(
+			'content_expunge_function'  => 'switchboard_content_expunge',
+			'content_icon_tpl'           => 'bitpackage:switchboard/service_content_icon_inc.tpl',
+		)
+	);
 
 //	$gBitSystem->registerNotifyEvent( array( "switchboard_request" => tra("A switchboard request is made.") ) );
 //	$gBitSystem->registerNotifyEvent( array( "switchboard_reply" => tra("A switchboard reply is made.") ) );
 
+
+	// Initialize the switchboard system global if we haven't already
 	require_once( 'SwitchboardSystem.php' );
+
+	$gSwitchboardSystem = new SwitchboardSystem();
+	$gSwitchboardSystem->registerSwitchboardListener( 'switchboard', 'email', 'switchboard_send_email' );
+	$gSwitchboardSystem->registerSwitchboardListener( 'switchboard', 'digest', 'switchboard_send_digest', array( 'useQueue' => TRUE ));
+
+	// Store it in the context.
+	$gBitSmarty->assign_by_ref( 'gSwitchboardSystem', $gSwitchboardSystem );
 }
 
 $gBitThemes->loadCss( SWITCHBOARD_PKG_PATH.'switchboard.css' );

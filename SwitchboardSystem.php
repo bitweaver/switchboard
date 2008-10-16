@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.14 2008/07/31 21:49:52 wjames5 Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.15 2008/10/16 17:59:08 squareing Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.14 $
+ * @version  $Revision: 1.15 $
  * @package  switchboard
  */
 
@@ -487,16 +487,6 @@ function switchboard_content_expunge(&$pObject, $pHash) {
 			$this->mDb->query($query, $messageIds);
 		}
 	}
-}
-
-// Initialize the switchboard system global if we haven't already
-if ( empty( $gSwitchboardSystem ) ) {
-	$gSwitchboardSystem = new SwitchboardSystem();
-	$gSwitchboardSystem->registerSwitchboardListener('switchboard', 'email', 'switchboard_send_email');
-	$gSwitchboardSystem->registerSwitchboardListener('switchboard', 'digest', 'switchboard_send_digest', array('useQueue' => true));
-
-	// Store it in the context.
-	$gBitSmarty->assign_by_ref('gSwitchboardSystem', $gSwitchboardSystem);
 }
 
 ?>
