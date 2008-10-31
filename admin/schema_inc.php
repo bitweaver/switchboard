@@ -45,10 +45,9 @@ foreach( array_keys( $tables ) AS $tableName ) {
 $gBitInstaller->registerPackageInfo( SWITCHBOARD_PKG_NAME, array(
 	'description' => "Switchboard is a general service package for enhancing how packages can route messages in the system.",
 	'license' => '<a href="http://www.gnu.org/licenses/licenses.html#LGPL">LGPL</a>',
-	'version' => '1.0',
-	'state' => 'R2',
-	'dependencies' => '',
 ) );
+
+$gBitInstaller->registerPackageVersion( SWITCHBOARD_PKG_NAME, '1.0.0' );
 
 $sequences = array (
 	'switchboard_queue_id_seq' => array( 'start' => 1 )
