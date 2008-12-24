@@ -1,6 +1,12 @@
 <?php
+/**
+ * @package switchboard
+ */
 
-require_once('../bit_setup_inc.php');
+/**
+ * Initialization
+ */
+ require_once('../bit_setup_inc.php');
 
 if( ! $gBitUser->isRegistered() ) {
 	$gBitSystem->setHttpStatus(403);
