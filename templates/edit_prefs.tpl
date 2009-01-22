@@ -1,5 +1,5 @@
 {strip}
-<h1>{tr}Switchboard Preferences{/tr}</h1>
+<h1>{tr}{$smarty.const.SWITCHBOARD_PKG_TITLE} Preferences{/tr}</h1>
 {if empty($gSwitchboardSystem->mListeners) }
 	<div class="warning">{tr}No packages registered as listeners.{/tr}</div>
 {else}

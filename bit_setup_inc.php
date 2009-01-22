@@ -13,6 +13,7 @@ $registerHash = array(
 $gBitSystem->registerPackage( $registerHash );
 
 if( $gBitSystem->isPackageActive( 'switchboard' ) ) {
+	define( 'SWITCHBOARD_PKG_TITLE', ucfirst( strtolower( SWITCHBOARD_PKG_DIR ) ) );
 	/*
 	$menuHash = array(
 		'package_name'       => SWITCHBOARD_PKG_NAME,
