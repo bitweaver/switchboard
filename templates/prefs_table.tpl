@@ -7,7 +7,7 @@
 		</tr>
 		{foreach from=$gSwitchboardSystem->mSenders key=package item=types}
 			<tr>	
-				<td rowspan="{$types.types|@count}"><h2>{$package|capitalize:true}</h2></td>
+				<td rowspan="{$types.types|@count}"><h2>{"`$package`_PKG_TITLE"|strtoupper|constant}</h2></td>
 				{foreach from=$types.types item=type name=type}
 					{if !$smarty.foreach.type.first}
 						<tr>
