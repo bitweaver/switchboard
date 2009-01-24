@@ -1,36 +1,20 @@
 {strip}
-	<table class="switchboard">
-		<tr>
-			<th>{tr}Package{/tr}</th>
-			<th>{tr}Event{/tr}</th>
-			<th>{tr}Send Using{/tr}</th>
-		</tr>
+	<div class="switchboard">
 		{foreach from=$gSwitchboardSystem->mSenders key=package item=types}
-			<tr>	
-				<td rowspan="{$types.types|@count}"><h2>{"`$package`_PKG_TITLE"|strtoupper|constant}</h2></td>
-				{foreach from=$types.types item=type name=type}
-					{if !$smarty.foreach.type.first}
-						<tr>
-					{/if}
-					<td><h3>{$type|capitalize:true}</h3></td>
-					<td>
-						<ul>
-							{if $includeDefaultSend}
-								<li>{tr}Default{/tr}: <input type="radio" name="{$prefs_table_value_prefix}[{$package}][{$type}]" value="default" {if empty($prefs_data.$package.$type.delivery_style)}checked{/if} /></li>
-							{/if}
-
-							<li>{tr}Don't Send{/tr}: <input type="radio" name="{$prefs_table_value_prefix}[{$package}][{$type}]" value="none" {if (!$includeDefaultSend && empty($prefs_data.$package.$type)) || $prefs_data.$package.$type.delivery_style == 'none'}checked{/if} /></li>
-
-							{foreach from=$gSwitchboardSystem->mListeners key=style item=options}
-								<li>{$style|capitalize:true} <input type="radio" name="{$prefs_table_value_prefix}[{$package}][{$type}]" value="{$style}" {if $prefs_data.$package.$type.delivery_style == $style}checked{/if}/></li>
-							{/foreach}
-						</ul>
-					</td>
-					{if !$smarty.foreach.type.first}
-						</tr>
-					{/if}			
-				{/foreach}
-			</tr>
+			{legend legend=$package}
+			{foreach from=$types.types item=type name=type}
+			<div class="row">
+				{formlabel label=$type|capitalize:true}
+				{forminput}	
+					<select name="{$prefs_table_value_prefix}[{$package}][{$type}]">
+					{foreach from=$gSwitchboardSystem->mListeners key=style item=options}
+						<option value="{$style}" {if (empty($prefs_data.$package.$type.delivery_style) && $gBitSystem->getConfig('switchboard_default_notification') == $style) || $prefs_data.$package.$type.delivery_style == $style}selected="selected"{/if}/>{$style|capitalize:true}</input>
+					{/foreach}
+					</select>
+				{/forminput}
+			</div>
+			{/foreach}
+			{/legend}
 		{/foreach}
-	</table>
+	</div>
 {/strip}

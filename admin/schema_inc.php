@@ -61,3 +61,6 @@ $indices = array(
 	'switchboard_prefs_content_idx' => array( 'table' => 'switchboard_prefs', 'cols' => 'content_id', 'opts' => NULL ),
 	);
 $gBitInstaller->registerSchemaIndexes( SWITCHBOARD_PKG_NAME, $indices );
+
+$gBitInstaller->registerPreferences( SWITCHBOARD_PKG_NAME, array(
+	array( SWITCHBOARD_PKG_NAME, 'switchboard_default_notification','email'),

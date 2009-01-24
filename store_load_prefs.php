@@ -15,15 +15,12 @@ if( ! $gBitUser->isRegistered() ) {
 }
 
 // Save (if not anonymous user
-if( !empty($_REQUEST['saveSwitchboardPrefs']) && $gBitUser->mUserId != ANONYMOUS_USER_ID ) {
+if( !empty($_REQUEST['saveSwitchboardPrefs']) && $gBitUser->isRegistered() ) {
 	if( isset($_REQUEST['SBDefault']) ) {
 		foreach ($_REQUEST['SBDefault'] as $package => $types) {
 			foreach ($types as $type => $preference) {
-				if ($preference == 'none') {
-					$gSwitchboardSystem->deleteUserPref($gBitUser->mUserId, $package, $type, NULL);
-				}
-				else {
-					$gSwitchboardSystem->storeUserPref($gBitUser->mUserId, $package, $type, NULL, $preference);
+				if( !$gSwitchboardSystem->storeUserPref($gBitUser->mUserId, $package, $type, NULL, $preference) ) {
+					$gBitSystem->fatalError("Attempt to register a perference for a package that is not registered.");
 				}
 			}
 		}
@@ -32,11 +29,8 @@ if( !empty($_REQUEST['saveSwitchboardPrefs']) && $gBitUser->mUserId != ANONYMOUS
 		foreach ($_REQUEST['SBContent'] as $content_id => $packages) {
 			foreach ($packages as $package => $types) {
 				foreach ($types as $type => $preference) {
-					if ($preference == 'default') {
-						$gSwitchboardSystem->deleteUserPref($gBitUser->mUserId, $package, $type, $content_id);
-					}
-					else {
-						$gSwitchboardSystem->storeUserPref($gBitUser->mUserId, $package, $type, $content_id, $preference);
+					if( !$gSwitchboardSystem->storeUserPref($gBitUser->mUserId, $package, $type, $content_id, $preference) ) {
+						$gBitSystem->fatalError("Attempt to register a perference for a package that is not registered.");
 					}
 				}
 			}
@@ -45,7 +39,7 @@ if( !empty($_REQUEST['saveSwitchboardPrefs']) && $gBitUser->mUserId != ANONYMOUS
 }
 
 // Get the default preferences
-$prefs = $gSwitchboardSystem->loadPrefs($gBitUser->mUserId);
+$prefs = $gSwitchboardSystem->loadPrefs( $gBitUser->mUserId );
 
 // Now make it associate the way we want.
 $defaults = array();
@@ -69,8 +63,7 @@ if( empty($_REQUEST['content_id']) ) {
 			$contentPrefs[$data['content_id']][$data['package']][$data['event_type']] = $data;
 		}
 	}
-}
-else {
+} else {
 	$prefs = $gSwitchboardSystem->loadContentPrefs($gBitUser->mUserId, $_REQUEST['content_id']);
 	if( empty($prefs) ) {
 		// No prefs yet. Need to get the title.
@@ -81,8 +74,7 @@ else {
 
 		$contentTitles[$_REQUEST['content_id']] = $gContent->mInfo['title'];
 		$contentPrefs[$_REQUEST['content_id']] = array();
-	}
-	else {
+	} else {
 		foreach( $prefs as $data ) {
 			$contentPrefs[$data['content_id']][$data['package']][$data['event_type']] = $data;
 		}

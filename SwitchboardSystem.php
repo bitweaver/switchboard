@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.15 2008/10/16 17:59:08 squareing Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.16 2009/01/24 23:43:09 spiderr Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.15 $
+ * @version  $Revision: 1.16 $
  * @package  switchboard
  */
 
@@ -85,14 +85,13 @@ class SwitchboardSystem extends BitMailer {
 				}
 				$this->mListeners[$pDeliveryStyle]['function'] = $pFunction;
 				$this->mListeners[$pDeliveryStyle]['package'] = $pPackage;
+			} else {
+				$this->mErrors['listener'] = tra( "Package registered a non-existant function listener:" )." $pPackage => $pFunction";
 			}
-			else {
-				$gBitSystem->fatalError("Package: ".$pPackage," registered a non-existant function listener: ".$func);
-			}
+		} else {
+			$this->mErrors['listener'] = "Switchboard Error: ".$pPackage." attempt to register an already registered delivery style: ".$pDelivertyStyle.". Already registered by: ".$this->mListener[$pDeliveryStyle]['package'];
 		}
-		else {
-			$gBitSystem->fatalError("Switchboard Error: ".$pPackage." attempt to register an already registered delivery style: ".$pDelivertyStyle.". Already registered by: ".$this->mListener[$pDeliveryStyle]['package']);
-		}
+		return( count( $this->mErrors ) == 0 );
 	}
 
     /**
@@ -317,8 +316,7 @@ class SwitchboardSystem extends BitMailer {
 	}
 
 	/**
-	 * Deletes a preference for the given user, either a default
-	 * or content permission.
+	 * Deletes a preference for the given user, either a default or content permission.
 	 */
 	function deleteUserPref($pUserId, $pPackage, $pEventType, $pContentId = NULL) {
 		$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_prefs` WHERE `package` =? AND `event_type` = ? AND `user_id` = ? AND `content_id` ".(empty($pContentId) ? " IS NULL " : " = ?" );
@@ -333,22 +331,19 @@ class SwitchboardSystem extends BitMailer {
 	 * Stores a preference for the user.
 	 */
 	function storeUserPref($pUserId, $pPackage, $pEventType, $pContentId = NULL, $pDeliveryStyle = NULL) {
+		global $gBitSystem;
+		$ret = FALSE;
 		if ($this->senderIsRegistered($pPackage, $pEventType)) {
 			$this->mDb->StartTrans();
-
 			$this->deleteUserPref($pUserId, $pPackage, $pEventType, $pContentId);
-
-			$query = "INSERT INTO `".BIT_DB_PREFIX."switchboard_prefs` (`package`, `event_type`, `user_id`, `content_id`, `delivery_style`) VALUES (?, ?, ?, ?, ?)";
-			$bindVars = array( $pPackage, $pEventType, $pUserId, $pContentId, $pDeliveryStyle );
-
-			$this->mDb->query($query, $bindVars);
-
+			if( $pDeliveryStyle != $gBitSystem->getConfig( 'switchboard_default_notification' ) ) {	
+				$query = "INSERT INTO `".BIT_DB_PREFIX."switchboard_prefs` (`package`, `event_type`, `user_id`, `content_id`, `delivery_style`) VALUES (?, ?, ?, ?, ?)";
+				$this->mDb->query( $query, array( $pPackage, $pEventType, $pUserId, $pContentId, $pDeliveryStyle ) );
+			}
 			$this->mDb->CompleteTrans();
+			$ret = TRUE;
 		}
-		else {
-			global $gBitSystem;
-			$gBitSystem->fatalError("Attempt to register a perference for a package that is not registered.");
-		}
+		return $ret;
 	}
 
 	/**
@@ -378,7 +373,7 @@ class SwitchboardSystem extends BitMailer {
 					if( function_exists($func) ) {
 						$func($event, $users);
 					} else {
-						bit_log_error("Package: ".$options['package']," registered a non-existant function listener: ".$func);
+						bit_log_error(  tra( "Package registered a non-existant function listener:" )." $options[package] => $func" );
 					}
 				}
 			}
@@ -387,6 +382,10 @@ class SwitchboardSystem extends BitMailer {
 }
 
 /** Private! Sends a digest message */
+function switchboard_send_none($pSwitchboardEvent, $pRecipients) {
+	// What are you looking you at!
+}
+
 function switchboard_send_digest($pSwitchboardEvent, $pRecipients) {
 	// For each recipient (we ignore the event triggering the digest)
 	foreach ($pRecipients as $recipient) {

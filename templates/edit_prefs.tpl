@@ -1,5 +1,4 @@
 {strip}
-<h1>{tr}{$smarty.const.SWITCHBOARD_PKG_TITLE} Preferences{/tr}</h1>
 {if empty($gSwitchboardSystem->mListeners) }
 	<div class="warning">{tr}No packages registered as listeners.{/tr}</div>
 {else}
@@ -8,11 +7,10 @@
 	{else}
 		{form}
 			{if !empty($switchboardContentId)}<input type="hidden" name="content_id" value="{$switchboardContentId}" />{/if}
-			<h2>{tr}Default Preferences{/tr}</h2>
 			{include file="bitpackage:switchboard/prefs_table.tpl" prefs_table_value_prefix="SBDefault" prefs_data=$switchboardPrefs}
 
 			{if !empty($switchboardContentPrefs)}
-				<h2>Content Specific Preferences</h2>	
+				<h2>{tr}Specific Preferences{/tr}</h2>	
 				{jstabs}
 					{foreach from=$switchboardContentPrefs key=contentId item=contentPrefs}
 						{jstab title=$switchboardContentTitles.$contentId|escape:html}
