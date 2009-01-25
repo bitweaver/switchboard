@@ -11,7 +11,6 @@
 if( ! $gBitUser->isRegistered() ) {
 	$gBitSystem->setHttpStatus(403);
 	$gBitSystem->fatalError('You must be registered to set switchboard preferences.');
-	die;
 }
 
 // Save (if not anonymous user
@@ -39,7 +38,7 @@ if( !empty($_REQUEST['saveSwitchboardPrefs']) && $gBitUser->isRegistered() ) {
 }
 
 // Get the default preferences
-$prefs = $gSwitchboardSystem->loadPrefs( $gBitUser->mUserId );
+$prefs = $gSwitchboardSystem->loadUserPrefs( $gBitUser->mUserId );
 
 // Now make it associate the way we want.
 $defaults = array();

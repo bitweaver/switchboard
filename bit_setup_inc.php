@@ -37,9 +37,12 @@ if( $gBitSystem->isPackageActive( 'switchboard' ) ) {
 	require_once( 'SwitchboardSystem.php' );
 
 	$gSwitchboardSystem = new SwitchboardSystem();
-	$gSwitchboardSystem->registerSwitchboardListener( 'switchboard', 'none', 'switchboard_send_none' );
-	$gSwitchboardSystem->registerSwitchboardListener( 'switchboard', 'email', 'switchboard_send_email' );
-	$gSwitchboardSystem->registerSwitchboardListener( 'switchboard', 'digest', 'switchboard_send_digest', array( 'useQueue' => TRUE ));
+	$gSwitchboardSystem->loadPlugins();
+
+	if( $gBitSystem->isPackageActive( 'switchboard' )) {
+		global $gSwitchboardSystem;
+		$gSwitchboardSystem->registerSender( 'My Content', array( 'new comment' ));
+	}
 
 	// Store it in the context.
 	$gBitSmarty->assign_by_ref( 'gSwitchboardSystem', $gSwitchboardSystem );

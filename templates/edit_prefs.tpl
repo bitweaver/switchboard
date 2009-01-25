@@ -1,5 +1,5 @@
 {strip}
-{if empty($gSwitchboardSystem->mListeners) }
+{if empty($gSwitchboardSystem->mTransports) }
 	<div class="warning">{tr}No packages registered as listeners.{/tr}</div>
 {else}
 	{if empty($gSwitchboardSystem->mSenders)}

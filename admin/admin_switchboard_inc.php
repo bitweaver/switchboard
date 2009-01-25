@@ -46,7 +46,7 @@ if( !empty( $_POST ) ) {
 			$gBitSystem->storeConfig( $key, isset( $_REQUEST[$key] ) ? $_REQUEST[$key] : NULL );
 		}
 	}
-	$gBitSystem->storeConfig( 'switchboard_default_notification', $_REQUEST['switchboard_default_notification'] );
+	$gBitSystem->storeConfig( 'switchboard_default_transport', $_REQUEST['switchboard_default_transport'] );
 }
 
 ?>

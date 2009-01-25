@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.16 2009/01/24 23:43:09 spiderr Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.17 2009/01/25 04:27:07 spiderr Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.16 $
+ * @version  $Revision: 1.17 $
  * @package  switchboard
  */
 
@@ -41,9 +41,9 @@ require_once( KERNEL_PKG_PATH . 'BitMailer.php' );
 class SwitchboardSystem extends BitMailer {
 
 	/**
-	 * The packages registered to listen for events
+	 * Active transport plugins
 	 */
-	var $mListeners;
+	var $mTransports;
 
 	/**
 	 * The packages registered to send events
@@ -58,40 +58,9 @@ class SwitchboardSystem extends BitMailer {
 	 */
 	function SwitchboardSystem() {
 		// Not much to do here
-		$this->mListeners = array();
+		$this->mTransports = array();
 		$this->mSenders = array();
 		LibertyBase::LibertyBase();
-	}
-
-    /**
-	 * Register the callback function for a given package.
-	 *
-	 * The function should have the following API:
-	 * handleSwitchboardNotification($pSwitchboardEvent, $pRecipients) Where
-	 * $pSwitchboardEvent is the array with data on the event and $pRecipients
-	 * is the array of users to deliver the event to.
-	 *
-	 * $pDeliveryStyles - The delivery style being registered
-	 * $pFunction - The function that will get the callback
-	 * $pOptions - Options for the listner. Currently supported options are:
-				useQueue - If true the message is queued and the handler is called from tendQueue instead
-	 *
-	 */
-    function registerSwitchboardListener( $pPackage, $pDeliveryStyle, $pFunction, $pOptions = NULL ) {
-		if ( empty($this->mListener[$pDeliveryStyle]) ) {
-			if (function_exists($pFunction)) {
-				if (is_array($pOptions)) {
-					$this->mListeners[$pDeliveryStyle] = $pOptions;
-				}
-				$this->mListeners[$pDeliveryStyle]['function'] = $pFunction;
-				$this->mListeners[$pDeliveryStyle]['package'] = $pPackage;
-			} else {
-				$this->mErrors['listener'] = tra( "Package registered a non-existant function listener:" )." $pPackage => $pFunction";
-			}
-		} else {
-			$this->mErrors['listener'] = "Switchboard Error: ".$pPackage." attempt to register an already registered delivery style: ".$pDelivertyStyle.". Already registered by: ".$this->mListener[$pDeliveryStyle]['package'];
-		}
-		return( count( $this->mErrors ) == 0 );
 	}
 
     /**
@@ -99,8 +68,44 @@ class SwitchboardSystem extends BitMailer {
 	 * $pTypes is the array of event types this package will send.
 	 *
 	 */
-    function registerSwitchboardSender( $pPackage, $pTypes ) {
+    function registerSender( $pPackage, $pTypes ) {
 		$this->mSenders[$pPackage]['types'] = $pTypes;
+	}
+
+	/** 
+	 * Registers a transport plugin
+	 * 
+	 * Populates the list of available transport types
+	 * Example access looks like $this->mTransports['email']['send_function']
+	 **/
+	function registerTransport( $pGuid, $pParamHash ){
+		if ( empty($this->mTransports[$pGuid]) ) {
+			$this->mTransports[$pGuid] = array_merge( $pParamHash );
+		}
+		else {
+			$gBitSystem->fatalError("Switchboard Error: ".$pParamHash['package']." attempt to register an already registered transport handler: ".$pGuid.". Already registered by: ".$this->mTransports[$pGuid]['package']);
+		}
+	}
+
+	/**
+	 * Load active transport plugins
+	 **/
+	function loadPlugins(){
+		global $gBitSystem;
+		$pluginLoc = $gBitSystem->getConfig( "switchbaord_plugin_path", SWITCHBOARD_PKG_PATH.'plugins' );
+		if( $plugins = scandir( $pluginLoc ) ) {
+			foreach( $plugins as $pluginDirName ) {
+				$pluginFile = $pluginLoc.'/'.$pluginDirName.'/transport.php';
+				if( file_exists( $pluginFile ) ) {
+					include_once( $pluginFile );
+				}
+			}
+		}
+	}
+
+	function getDefaultTransport() {
+		global $gBitSystem;
+		return $gBitSystem->getConfig( 'switchboard_default_transport' );
 	}
 
 	/**
@@ -114,48 +119,108 @@ class SwitchboardSystem extends BitMailer {
 	 *				Currently supported are: message and subject
 	 */
 	function sendEvent($pPackage, $pEventType, $pContentId, $pDataHash, $pRecipients = NULL) {
-
 		global $gBitSystem, $gBitUser;
+		$ret = FALSE;
 		// Make sure event is registered so we can do prefs for them. This is for devs really
 		if( !empty($this->mSenders[$pPackage]) && in_array($pEventType, $this->mSenders[$pPackage]['types']) ) {
-			$event = $pDataHash;
-			$event['package'] = $pPackage;
-			$event['content_id'] = $pContentId;
-			$event['event_type'] = $pEventType;
+			$msgHash = $pDataHash;
+			$msgHash['package'] = $pPackage;
+			$msgHash['content_id'] = $pContentId;
+			$msgHash['event_type'] = $pEventType;
 
 			// Load users preferences
 			$usersPrefs = $this->loadEffectivePrefs($pRecipients, $pPackage, $pEventType, $pContentId);
-			$messageId = NULL;
 			// Check each delivery style
-  			foreach( $usersPrefs as $prefered_delivery => $users ) {
-				// Make sure the style is registered.
-				if( !empty($this->mListeners[$prefered_delivery]['function']) ) {
-					// Does this delivery style get handled at cron time?
-					if( isset($this->mListeners[$prefered_delivery]['useQueue']) ) {
-						// Have we stored this message yet?
-						if( $messageId == NULL ) {
-							$messageId = $this->queueMessage($event);
-						}
-						$this->queueDelivery($messageId, $users, $prefered_delivery);
+  			foreach( $usersPrefs as $transportType => $users ) {
+				$msgHash['users'] = $users;
+				$msgHash['transport_type'] = $transportType;
+				$msgHash['use_queue'] = !empty( $this->mTransports[$transportType]['use_queue'] )?TRUE:FALSE;
+				// send the message using the prefered delivery style
+				$this->sendMsg( $msgHash );
+			}
+			$ret = TRUE;
+		} else {
+			bit_log_error( "Package: ".$pPackage." attempted to send message of type: ".$pEventType." but didn't register that it wanted to send this type." );
+		}
+		return $ret;
+	}
+
+	/**
+	 * Send a message using a particular transport type 
+	 * 
+	 * @param array $pParamHash Array of message to be sent
+	 *
+	 * @param array $pParamHash['transport_type'] required, the method of delivery, e.g. email, sms, im, etc
+	 * @param array $pParamHash['recipients'] an array of arrays containing the transport address for each recipient - optional if users is set
+	 * @param array $pParamHash['users'] an array of arrays of users - required for queue or if recipients is empty
+	 * @param array $pParamHash['use_queue'] boolean to use the message queue - only valid for spooling to registered users for messages related to a content object
+	 * @param array $pParamHash['content_id'] - optional, required only for message queue
+	 * 
+	 * params passed along to send handler or message queue
+	 * @param array $pParamHash['event_type'] optional, required only for message queue
+	 * @param array $pParamHash['package'] optional, required only for message queue
+	 **/
+	function sendMsg( $pParamHash ){
+		global $gBitSystem;
+
+		if( !empty( $pParamHash['transport_type'] ) ){
+			if( empty( $pParamHash['recipients'] ) && !empty( $pParamHash['users'] ) ){
+				$pParamHash['recipients'] = $pParamHash['users'];
+			}
+			// convenience
+			$transport_type = $pParamHash['transport_type'];
+			$recipients = $pParamHash['recipients'];
+			$users = $pParamHash['users'];
+
+			// queue message reference
+			$messageId = NULL;
+
+			// make sure the transport type is registered.
+			if( !empty($this->mTransports[$transport_type]['send_function']) ) {
+ 				// Does this transport type get handled at cron time?
+				/**
+				 * NOTE: use_queue is only valid for messages going to registered users! 
+				 * this will fail if you try to queue non-registered users
+				 * this should only be set in sendEvent
+				 **/
+				if( $pParamHash['use_queue'] && !empty( $pParamHash['content_id'] ) && !empty( $users ) ) {
+					// Have we stored this message yet?
+					if( $messageId == NULL ) {
+						$messageId = $this->queueMessage($pParamHash);
+					}
+					$this->queueDelivery($messageId, $users, $transport_type);
+				} 
+				// send immediately
+				else {
+					$func = $this->mTransports[$transport_type]['send_function'];
+					if( function_exists($func) ) {
+						$func($pParamHash);
 					} else {
-						$func = $this->mListeners[$prefered_delivery]['function'];
-						if( function_exists($func) ) {
-							$func($event, $users);
-						} else {
-							$gBitSystem->fatalError("Package: ".$options['package']," registered a non-existant function listener: ".$func);
-						}
+						// @TODO fataling here is kinda nasty since this function might be called a few times for multiple transport types from sendEvent
+						$gBitSystem->fatalError("Package: ".$this->mTransports[$transport_type]['package']." registered a non-existant send handler: ".$func);
 					}
-				} else {
-					$user_list = '';
-					foreach ($users as $user) {
-						$user_list .= $user['login']." ";
-					}
-					$gBitSystem->fatalError("Delivery Style: ".$prefered_delivery." for users: ". $user_list." not registered!");
 				}
+			} 
+			// handler error
+			else {
+				// display the list of recipients who are not getting the message
+				$recipient_list = '';
+				foreach ($recipients as $recipient) {
+					// if we have users then we'll display their login name, otherwise display the address we were trying to send to
+					$recipient_list .= ( !empty( $users ) ? $recipient['login'] : $recipient[$transport_type] ) . " ";
+				}
+				// @TODO fataling here is kinda nasty since this function might be called a few times for different transport types from sendEvent
+				$gBitSystem->fatalError("Delivery Style: ".$transport_type." for users: ". $user_list." not registered!");
 			}
 		} else {
 			$gBitSystem->fatalError("Package: ".$pPackage." attempted to send message of type: ".$pEventType." but didn't register that it wanted to send this type.");
 		}
+	}	
+
+	// convenience function
+	function sendEmail( $pParamHash ){
+		$pParamHash['transport_type'] = 'email';
+		$this->sendMsg( $pParamHash );
 	}
 
 	/**
@@ -229,24 +294,19 @@ class SwitchboardSystem extends BitMailer {
 	 * Returns an associative array with delivery_style as the key.
 	 */
 	function loadEffectivePrefs( $pRecipients, $pPackage, $pEventType, $pContentId = NULL) {
-		$defaults = $this->loadPrefs($pRecipients, $pPackage, $pEventType);
-		$overrides = $this->loadContentPrefs($pRecipients, $pContentId);
-
 		// Figure out each users effect prefs
-		$prefs = array();
-		foreach ($defaults as $data) {
-			$prefs[$data['user_id']] = $data;
-		}
-		foreach ($overrides as $data) {
-			$prefs[$data['user_id']] = $data;
-		}
-
-		// Now reorder by delivery style
 		$ret = array();
+
+		$ownerPrefs = $this->loadOwnerPrefs( $pContentId );
+		$userWatchers = $this->loadUserPrefs($pRecipients, $pPackage, $pEventType);
+		$contentWatchers = $this->loadContentPrefs($pRecipients, $pContentId );
+
+		// order is important here to determine who wins. ownerPrefs should be first
+		$prefs = array_merge( $ownerPrefs, $userWatchers, $contentWatchers );
+		// Now reorder by delivery style
 		foreach ($prefs as $user_id => $data) {
 			$ret[$data['delivery_style']][$data['user_id']] = $data;
 		}
-
 		return $ret;
 	}
 
@@ -254,12 +314,8 @@ class SwitchboardSystem extends BitMailer {
 	 * Loads the users preferences for a given content object.
 	 */
 	function loadContentPrefs( $pRecipients = NULL, $pContentId = NULL ) {
-		$selectSql = "SELECT sp.*, uu.`email`, uu.`login`, uu.`real_name`, lc.`title`, lc.`content_type_guid`  ";
-		$fromSql = "FROM `".BIT_DB_PREFIX."switchboard_prefs` sp ";
-		$joinSql = "LEFT JOIN `".BIT_DB_PREFIX."liberty_content` lc ON (sp.`content_id` = lc.`content_id`) ";
-		$joinSql .= "LEFT JOIN `".BIT_DB_PREFIX."users_users` uu ON (sp.`user_id` = uu.`user_id`) ";
-		$whereSql = "WHERE sp.`content_id` ";
 		$bindVars = array();
+		$whereSql = '';
 
 		if( !empty($pContentId) ) {
 			$whereSql .= '= ? ';
@@ -277,8 +333,26 @@ class SwitchboardSystem extends BitMailer {
 			$bindVars = array_merge($bindVars, $pRecipients);
 		}
 
-		$prefs = $this->mDb->getArray($selectSql.$fromSql.$joinSql.$whereSql, $bindVars);
+		$query =   "SELECT uu.`user_id` AS `hash_key`, sp.*, uu.`email`, uu.`login`, uu.`real_name`, lc.`title`, lc.`content_type_guid` 
+					FROM `".BIT_DB_PREFIX."switchboard_prefs` sp 
+						LEFT JOIN `".BIT_DB_PREFIX."liberty_content` lc ON (sp.`content_id` = lc.`content_id`) 
+						LEFT JOIN `".BIT_DB_PREFIX."users_users` uu ON (sp.`user_id` = uu.`user_id`) 
+					WHERE sp.`content_id` ".$whereSql;
+		$prefs = $this->mDb->getAssoc( $query, $bindVars);
+		return $prefs;
+	}
 
+	/**
+	 * Loads the users for the content owner
+	 */
+	function loadOwnerPrefs( $pContentId ) {
+		$bindVars[] = $pContentId;
+		$query =   "SELECT uu.`user_id` AS `hash_key`, COALESCE( sp.`delivery_style`, '".$this->getDefaultTransport()."' ) AS `delivery_style`, sp.`package`, sp.`event_type`, uu.`user_id, uu.`email`, uu.`login`, uu.`real_name`, lc.`content_id`, lc.`title`, lc.`content_type_guid` 
+					FROM `".BIT_DB_PREFIX."liberty_content` lc
+						INNER JOIN `".BIT_DB_PREFIX."users_users` uu ON (lc.`user_id` = uu.`user_id`) 
+						LEFT JOIN `".BIT_DB_PREFIX."switchboard_prefs` sp ON (sp.`content_id` = lc.`content_id`) 
+					WHERE lc.`content_id` = ? ";
+		$prefs = $this->mDb->getAssoc( $query, $bindVars );
 		return $prefs;
 	}
 
@@ -287,11 +361,8 @@ class SwitchboardSystem extends BitMailer {
 	 * If recipients is null then all users with registered preferences
 	 * are loaded.
 	 */
-	function loadPrefs( $pRecipients = NULL, $pPackage = NULL, $pEventType = NULL ) {
-		$selectSql = "SELECT sp.*, uu.`email`, uu.`login`, uu.`real_name` ";
-		$fromSql = "FROM `".BIT_DB_PREFIX."switchboard_prefs` sp ";
-		$joinSql = "LEFT JOIN `".BIT_DB_PREFIX."users_users` uu ON (sp.`user_id` = uu.`user_id`) ";
-		$whereSql = 'WHERE sp.`content_id` IS NULL ';
+	function loadUserPrefs( $pRecipients = NULL, $pPackage = NULL, $pEventType = NULL ) {
+		$whereSql = '';
 		$bindVars = array();
 		if (!empty($pPackage)) {
 			$whereSql .= "AND sp.`package` = ? ";
@@ -311,7 +382,11 @@ class SwitchboardSystem extends BitMailer {
 			$bindVars = array_merge($bindVars, $pRecipients);
 		}
 
-		$prefs = $this->mDb->getArray($selectSql.$fromSql.$joinSql.$whereSql, $bindVars);
+		$query =   "SELECT uu.`user_id` AS `hash_key`, sp.*, uu.`email`, uu.`login`, uu.`real_name` 
+					FROM `".BIT_DB_PREFIX."switchboard_prefs` sp 
+						LEFT JOIN `".BIT_DB_PREFIX."users_users` uu ON (sp.`user_id` = uu.`user_id`) 
+		 			WHERE sp.`content_id` IS NULL ".$whereSql;
+		$prefs = $this->mDb->getAssoc( $query, $bindVars );
 		return $prefs;
 	}
 
@@ -331,12 +406,11 @@ class SwitchboardSystem extends BitMailer {
 	 * Stores a preference for the user.
 	 */
 	function storeUserPref($pUserId, $pPackage, $pEventType, $pContentId = NULL, $pDeliveryStyle = NULL) {
-		global $gBitSystem;
 		$ret = FALSE;
 		if ($this->senderIsRegistered($pPackage, $pEventType)) {
 			$this->mDb->StartTrans();
 			$this->deleteUserPref($pUserId, $pPackage, $pEventType, $pContentId);
-			if( $pDeliveryStyle != $gBitSystem->getConfig( 'switchboard_default_notification' ) ) {	
+			if( $pDeliveryStyle != $this->mDb->getDefaultTransport() ) {	
 				$query = "INSERT INTO `".BIT_DB_PREFIX."switchboard_prefs` (`package`, `event_type`, `user_id`, `content_id`, `delivery_style`) VALUES (?, ?, ?, ?, ?)";
 				$this->mDb->query( $query, array( $pPackage, $pEventType, $pUserId, $pContentId, $pDeliveryStyle ) );
 			}
@@ -369,11 +443,11 @@ class SwitchboardSystem extends BitMailer {
 			// And figure out how to deliver them
 			foreach($msg_to_deliver as $message_id => $deliveries) {
 				foreach($delivereis as $delivery_style => $users) {
-					$func = $this->mListeners[$delivery_style]['function'];
+					$func = $this->mTransports[$delivery_style]['send_function'];
 					if( function_exists($func) ) {
 						$func($event, $users);
 					} else {
-						bit_log_error(  tra( "Package registered a non-existant function listener:" )." $options[package] => $func" );
+						bit_log_error(  tra( "Package registered a non-existant function listener:" )." ".$this->mTransports[$delivery_style]['send_function']." => $func" );
 					}
 				}
 			}
@@ -382,10 +456,6 @@ class SwitchboardSystem extends BitMailer {
 }
 
 /** Private! Sends a digest message */
-function switchboard_send_none($pSwitchboardEvent, $pRecipients) {
-	// What are you looking you at!
-}
-
 function switchboard_send_digest($pSwitchboardEvent, $pRecipients) {
 	// For each recipient (we ignore the event triggering the digest)
 	foreach ($pRecipients as $recipient) {
