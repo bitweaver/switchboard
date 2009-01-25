@@ -64,4 +64,4 @@ $gBitInstaller->registerSchemaIndexes( SWITCHBOARD_PKG_NAME, $indices );
 
 $gBitInstaller->registerPreferences( SWITCHBOARD_PKG_NAME, array(
 	array( SWITCHBOARD_PKG_NAME, 'switchboard_default_transport','email'),
-);
+) );
