@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.17 2009/01/25 04:27:07 spiderr Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.18 2009/01/25 05:32:23 wjames5 Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.17 $
+ * @version  $Revision: 1.18 $
  * @package  switchboard
  */
 
@@ -71,6 +71,16 @@ class SwitchboardSystem extends BitMailer {
     function registerSender( $pPackage, $pTypes ) {
 		$this->mSenders[$pPackage]['types'] = $pTypes;
 	}
+
+	/**
+	 * Virtual function for compatability with groups pkg until
+	 * groups dev settles down and can be updated and tested with switchboard code changes
+	 * Update groups/bit_setup_inc.php before removing
+	 **/
+	function registerSwitchboardSender( $pPackage, $pTypes ) {
+		$this->registerSender( $pPackage, $pTypes );
+	}
+	
 
 	/** 
 	 * Registers a transport plugin
