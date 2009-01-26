@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.18 2009/01/25 05:32:23 wjames5 Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.19 2009/01/26 19:18:34 spiderr Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.18 $
+ * @version  $Revision: 1.19 $
  * @package  switchboard
  */
 
@@ -420,7 +420,7 @@ class SwitchboardSystem extends BitMailer {
 		if ($this->senderIsRegistered($pPackage, $pEventType)) {
 			$this->mDb->StartTrans();
 			$this->deleteUserPref($pUserId, $pPackage, $pEventType, $pContentId);
-			if( $pDeliveryStyle != $this->mDb->getDefaultTransport() ) {	
+			if( $pDeliveryStyle != $this->getDefaultTransport() ) {	
 				$query = "INSERT INTO `".BIT_DB_PREFIX."switchboard_prefs` (`package`, `event_type`, `user_id`, `content_id`, `delivery_style`) VALUES (?, ?, ?, ?, ?)";
 				$this->mDb->query( $query, array( $pPackage, $pEventType, $pUserId, $pContentId, $pDeliveryStyle ) );
 			}
