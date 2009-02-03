@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.20 2009/02/03 18:55:14 tekimaki_admin Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.21 2009/02/03 18:56:13 tekimaki_admin Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.20 $
+ * @version  $Revision: 1.21 $
  * @package  switchboard
  */
 
@@ -316,7 +316,7 @@ class SwitchboardSystem extends BitMailer {
 		// Now reorder by delivery style
 		foreach ($prefs as $user_id => $data) {
 			// @TODO I have no idea if this is a new bug or an old bug - seems odd the user should have a null delivery_style pref - but it really fucks things up - wjames5
-			if( !empty( $data['delivery_style'] ){
+			if( !empty( $data['delivery_style'] ) ){
 				$ret[$data['delivery_style']][$data['user_id']] = $data;
 			}
 		}
