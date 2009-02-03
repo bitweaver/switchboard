@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.19 2009/01/26 19:18:34 spiderr Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.20 2009/02/03 18:55:14 tekimaki_admin Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.19 $
+ * @version  $Revision: 1.20 $
  * @package  switchboard
  */
 
@@ -223,7 +223,7 @@ class SwitchboardSystem extends BitMailer {
 				$gBitSystem->fatalError("Delivery Style: ".$transport_type." for users: ". $user_list." not registered!");
 			}
 		} else {
-			$gBitSystem->fatalError("Package: ".$pPackage." attempted to send message of type: ".$pEventType." but didn't register that it wanted to send this type.");
+			$gBitSystem->fatalError("Attempted to send message of type: ".$transport_type." but it is not registed.");
 		}
 	}	
 
@@ -315,7 +315,10 @@ class SwitchboardSystem extends BitMailer {
 		$prefs = array_merge( $ownerPrefs, $userWatchers, $contentWatchers );
 		// Now reorder by delivery style
 		foreach ($prefs as $user_id => $data) {
-			$ret[$data['delivery_style']][$data['user_id']] = $data;
+			// @TODO I have no idea if this is a new bug or an old bug - seems odd the user should have a null delivery_style pref - but it really fucks things up - wjames5
+			if( !empty( $data['delivery_style'] ){
+				$ret[$data['delivery_style']][$data['user_id']] = $data;
+			}
 		}
 		return $ret;
 	}
@@ -357,7 +360,7 @@ class SwitchboardSystem extends BitMailer {
 	 */
 	function loadOwnerPrefs( $pContentId ) {
 		$bindVars[] = $pContentId;
-		$query =   "SELECT uu.`user_id` AS `hash_key`, COALESCE( sp.`delivery_style`, '".$this->getDefaultTransport()."' ) AS `delivery_style`, sp.`package`, sp.`event_type`, uu.`user_id, uu.`email`, uu.`login`, uu.`real_name`, lc.`content_id`, lc.`title`, lc.`content_type_guid` 
+		$query =   "SELECT uu.`user_id` AS `hash_key`, COALESCE( sp.`delivery_style`, '".$this->getDefaultTransport()."' ) AS `delivery_style`, sp.`package`, sp.`event_type`, uu.`user_id`, uu.`email`, uu.`login`, uu.`real_name`, lc.`content_id`, lc.`title`, lc.`content_type_guid` 
 					FROM `".BIT_DB_PREFIX."liberty_content` lc
 						INNER JOIN `".BIT_DB_PREFIX."users_users` uu ON (lc.`user_id` = uu.`user_id`) 
 						LEFT JOIN `".BIT_DB_PREFIX."switchboard_prefs` sp ON (sp.`content_id` = lc.`content_id`) 
