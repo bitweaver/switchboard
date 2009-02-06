@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.21 2009/02/03 18:56:13 tekimaki_admin Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.22 2009/02/06 01:23:17 tekimaki_admin Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.21 $
+ * @version  $Revision: 1.22 $
  * @package  switchboard
  */
 
@@ -538,20 +538,21 @@ function switchboard_send_email($pMessage, $pRecipients) {
 }
 
 function switchboard_content_expunge(&$pObject, $pHash) {
+	global $gBitDb;
 	if( $pObject->mContentTypeGuid == BITUSER_CONTENT_TYPE_GUID ) {
 		$bindVars = array($pObject->mUserId);
 		$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_prefs` WHERE `user_id` = ?";
-		$this->mDb->query($query, $bindVars);
+		$gBitDb->query($query, $bindVars);
 		$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_recipients` WHERE `user_id` = ?";
-		$this->mDb->query($query, $bindVars);
-		$query = "SELECT `message_id` FROM `.".BIT_DB_PREFIX."switchboard_queue` WHERE `user_id` = ?";
-		$messageIds = $this->mDb->getArray($query, $bindVars);
+		$gBitDb->query($query, $bindVars);
+		$query = "SELECT `message_id` FROM `".BIT_DB_PREFIX."switchboard_queue` WHERE `sending_user_id` = ?";
+		$messageIds = $gBitDb->getArray($query, $bindVars);
 		if (count($messageIds)) {
 			$in = implode(',', array_fill(0, count($messageIds), '?'));
 			$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_recipients` WHERE `message_id` IN (".$in.")";
-			$this->mDb->query($query, $messageIds);
+			$gBitDb->query($query, $messageIds);
 			$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_queue` WHERE `message_id` IN (".$in.")";
-			$this->mDb->query($query, $messageIds);
+			$gBitDb->query($query, $messageIds);
 		}
 	}
 	else {
@@ -564,9 +565,9 @@ function switchboard_content_expunge(&$pObject, $pHash) {
 		if (count($messageIds)) {
 			$in = implode(',', array_fill(0, count($messageIds), '?'));
 			$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_recipients` WHERE `message_id` IN (".$in.")";
-			$this->mDb->query($query, $messageIds);
+			$gBitDb->query($query, $messageIds);
 			$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_queue` WHERE `message_id` IN (".$in.")";
-			$this->mDb->query($query, $messageIds);
+			$gBitDb->query($query, $messageIds);
 		}
 	}
 }
