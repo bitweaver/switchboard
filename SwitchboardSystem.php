@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.22 2009/02/06 01:23:17 tekimaki_admin Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.23 2009/02/19 20:26:18 tekimaki_admin Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -23,7 +23,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.22 $
+ * @version  $Revision: 1.23 $
  * @package  switchboard
  */
 
@@ -193,7 +193,7 @@ class SwitchboardSystem extends BitMailer {
 				 * this will fail if you try to queue non-registered users
 				 * this should only be set in sendEvent
 				 **/
-				if( $pParamHash['use_queue'] && !empty( $pParamHash['content_id'] ) && !empty( $users ) ) {
+				if( !empty( $pParamHash['use_queue'] ) && !empty( $pParamHash['content_id'] ) && !empty( $users ) ) {
 					// Have we stored this message yet?
 					if( $messageId == NULL ) {
 						$messageId = $this->queueMessage($pParamHash);
@@ -206,8 +206,7 @@ class SwitchboardSystem extends BitMailer {
 					if( function_exists($func) ) {
 						$func($pParamHash);
 					} else {
-						// @TODO fataling here is kinda nasty since this function might be called a few times for multiple transport types from sendEvent
-						$gBitSystem->fatalError("Package: ".$this->mTransports[$transport_type]['package']." registered a non-existant send handler: ".$func);
+						bit_log_error("Package: ".$this->mTransports[$transport_type]['package']." registered a non-existant send handler: ".$func);
 					}
 				}
 			} 
@@ -219,11 +218,10 @@ class SwitchboardSystem extends BitMailer {
 					// if we have users then we'll display their login name, otherwise display the address we were trying to send to
 					$recipient_list .= ( !empty( $users ) ? $recipient['login'] : $recipient[$transport_type] ) . " ";
 				}
-				// @TODO fataling here is kinda nasty since this function might be called a few times for different transport types from sendEvent
-				$gBitSystem->fatalError("Delivery Style: ".$transport_type." for users: ". $user_list." not registered!");
+				bit_log_error("Delivery Style: ".$transport_type." for users: ". $recipient_list." not registered!");
 			}
 		} else {
-			$gBitSystem->fatalError("Attempted to send message of type: ".$transport_type." but it is not registed.");
+			bit_log_error("Attempted to send message of type: ".$transport_type." but it is not registed.");
 		}
 	}	
 
