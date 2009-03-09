@@ -24,6 +24,7 @@ if( $gBitSystem->isPackageActive( 'switchboard' ) ) {
 
 	$gLibertySystem->registerService( SWITCHBOARD_PKG_NAME, SWITCHBOARD_PKG_NAME,
 		array(
+			'users_expunge_function'  => 'switchboard_user_expunge',
 			'content_expunge_function'  => 'switchboard_content_expunge',
 			'content_icon_tpl'           => 'bitpackage:switchboard/service_content_icon_inc.tpl',
 		)
