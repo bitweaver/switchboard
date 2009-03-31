@@ -1,6 +1,8 @@
 <?php
 /**
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/user_preferences_inc.php,v 1.3 2009/03/31 05:53:55 lsces Exp $
  * @package switchboard
+ * @subpackage functions
  */
 
 /**

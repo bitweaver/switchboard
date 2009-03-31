@@ -1,8 +1,14 @@
 <?php
+/**
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/Dconnect.php,v 1.2 2009/03/31 05:53:55 lsces Exp $
+ * @package switchboard
+ */
 
-//The following class was created June 30th 2004 by Jeremy(pickle)
-//This class is designed to handle a direct connection
-
+/**
+ * @package switchboard
+ * The following class was created June 30th 2004 by Jeremy(pickle)
+ * This class is designed to handle a direct connection
+ */
 class Dconnect
 {
 	var $sock;

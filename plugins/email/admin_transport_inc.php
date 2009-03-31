@@ -1,5 +1,13 @@
 <?php
+/**
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/admin_transport_inc.php,v 1.2 2009/03/31 05:53:55 lsces Exp $
+ * @package switchboard
+ * @subpackage plugins
+ */
 
+/**
+ * Initialization
+ */
 $formSwitchboardFeatures = array(
 	"bitmailer_sender_email" => array(
 		'label' => 'From Email',

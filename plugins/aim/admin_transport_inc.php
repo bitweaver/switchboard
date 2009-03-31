@@ -1,5 +1,13 @@
 <?php
+/**
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/admin_transport_inc.php,v 1.2 2009/03/31 05:53:55 lsces Exp $
+ * @package switchboard
+ * @subpackage plugins
+ */
 
+/**
+ * Initialization
+ */
 $formTransportAim = array(
 	"switchboard_aim_screenname" => array(
 		'label' => 'AIM ScreenName',

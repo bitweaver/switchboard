@@ -1,4 +1,13 @@
 <?php
+/**
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/none/transport.php,v 1.2 2009/03/31 05:53:55 lsces Exp $
+ * @package switchboard
+ * @subpackage plugins
+ */
+
+/**
+ * Initialization
+ */
 global $gSwitchboardSystem;
 
 define( 'PLUGIN_GUID_TRANSPORT_NONE', 'none' );

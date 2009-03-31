@@ -1,4 +1,13 @@
 <?php
+/**
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/aim_client.php,v 1.2 2009/03/31 05:53:55 lsces Exp $
+ * @package switchboard
+ * @subpackage plugins
+ */
+
+/**
+ * Initialization
+ */
 $_SERVER['SCRIPT_URL'] = __FILE__;
 $_SERVER['REQUEST_URI'] = __FILE__;
 $_SERVER['REQUEST_METHOD'] = '';
