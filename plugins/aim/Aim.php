@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/Aim.php,v 1.2 2009/03/31 05:53:55 lsces Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/Aim.php,v 1.3 2009/03/31 06:14:06 lsces Exp $
  *	PHPTOCLIB: A library for AIM connectivity through PHP using the TOC protocal.
  *
  *	This library is free software; you can redistribute it and/or
@@ -612,6 +612,7 @@ class Aim
 	
     /** 
 	 * Constructor
+	 * @package switchboard
 	 *
 	 * Permit/Deny Mode Options
 	 * 1 - Allow All
