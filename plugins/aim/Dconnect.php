@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/Dconnect.php,v 1.2 2009/03/31 05:53:55 lsces Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/Dconnect.php,v 1.3 2009/03/31 06:37:03 lsces Exp $
  * @package switchboard
  */
 
@@ -135,7 +135,10 @@ class Dconnect
 	}
 }
 
-
+/**
+ * FileSendConnect
+ * @package switchboard
+ */
 class FileSendConnect
 {
 	var $sock;
