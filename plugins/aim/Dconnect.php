@@ -1,11 +1,13 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/Dconnect.php,v 1.3 2009/03/31 06:37:03 lsces Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/Dconnect.php,v 1.4 2009/03/31 08:19:52 lsces Exp $
  * @package switchboard
+ * @subpackage plugins-aim
  */
 
 /**
  * @package switchboard
+ * @subpackage plugins-aim
  * The following class was created June 30th 2004 by Jeremy(pickle)
  * This class is designed to handle a direct connection
  */
@@ -18,7 +20,6 @@ class Dconnect
 	var $cookie;
 	var $type=2;
 	var $connectedTo;
-	
 	
 	function Dconnect($ip,$port)
 	{
@@ -108,6 +109,7 @@ class Dconnect
 		//Now send it all
 		fputs($this->sock,$tosend,strlen($tosend));
 	}
+
 	function stuffToRead()
 	{
 		//$info=stream_get_meta_data($this->sock);
@@ -138,6 +140,7 @@ class Dconnect
 /**
  * FileSendConnect
  * @package switchboard
+ * @subpackage plugins-aim
  */
 class FileSendConnect
 {
@@ -147,7 +150,6 @@ class FileSendConnect
 	var $connected;
 	var $cookie;
 	var $tpye=3;
-	
 	
 	function FileSendConnect($ip,$port)
 	{
@@ -208,6 +210,7 @@ class FileSendConnect
 		//Now send it all
 		fwrite($this->sock,$tosend,strlen($tosend));
 	}
+
 	function stuffToRead()
 	{
 		//$info=stream_get_meta_data($this->sock);

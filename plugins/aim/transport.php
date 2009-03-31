@@ -1,8 +1,8 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/transport.php,v 1.2 2009/03/31 05:53:55 lsces Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/transport.php,v 1.3 2009/03/31 08:19:52 lsces Exp $
  * @package switchboard
- * @subpackage plugins
+ * @subpackage plugins-aim
  */
 
 /**
