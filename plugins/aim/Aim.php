@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/Aim.php,v 1.4 2009/03/31 08:19:52 lsces Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/Aim.php,v 1.5 2009/03/31 09:24:21 lsces Exp $
  *	PHPTOCLIB: A library for AIM connectivity through PHP using the TOC protocal.
  *
  *	This library is free software; you can redistribute it and/or
@@ -399,6 +399,11 @@ define("SFLAP_HEADER_LEN",6);
 
 $Silent  =  false; //True means nothing should be printed (Use sEcho instead of echo)
 
+/**
+ * Initialize
+ */
+require_once( 'Dconnect.php' );
+
 /** 
  * PHPTocLib AIM Class
  *
@@ -411,9 +416,6 @@ $Silent  =  false; //True means nothing should be printed (Use sEcho instead of 
  * @access public
  *
  */
-
-require_once( 'Dconnect.php' );
-
 class Aim
 {
 	/** 
@@ -613,9 +615,7 @@ class Aim
 	
     /** 
 	 * Constructor
-	 * @package switchboard
-	 * @subpackage plugins-aim
-	 *
+	 * 
 	 * Permit/Deny Mode Options
 	 * 1 - Allow All
 	 * 2 - Deny All
