@@ -32,7 +32,7 @@ $tables = array(
 		delivery_style C(64) NOTNULL
 		CONSTRAINT '
 			, CONSTRAINT `switchboard_recipients_m_ref` FOREIGN KEY (`message_id`) REFERENCES `".BIT_DB_PREFIX."switchboard_queue` (`message_id`)
-			, CONSTRAINT `switchboard_recipients_user_ref` FOREIGN KEY (`user_id`) REFERENCES `".BIT_DB_PREFIX."users_users` (`user_id`) '
+			, CONSTRAINT `switchboard_recipients_usr_ref` FOREIGN KEY (`user_id`) REFERENCES `".BIT_DB_PREFIX."users_users` (`user_id`) '
 	",
 );
 
