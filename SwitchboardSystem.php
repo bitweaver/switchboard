@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.25 2009/03/31 05:53:55 lsces Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.26 2009/04/07 15:12:18 tekimaki_admin Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -22,7 +22,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.25 $
+ * @version  $Revision: 1.26 $
  * @package  switchboard
  */
 
@@ -179,7 +179,7 @@ class SwitchboardSystem extends BitMailer {
 			// convenience
 			$transport_type = $pParamHash['transport_type'];
 			$recipients = $pParamHash['recipients'];
-			$users = $pParamHash['users'];
+			$users = !empty( $pParamHash['users'] )?$pParamHash['users']:NULL;
 
 			// queue message reference
 			$messageId = NULL;
