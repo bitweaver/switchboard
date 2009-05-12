@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.26 2009/04/07 15:12:18 tekimaki_admin Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.27 2009/05/12 00:18:19 tekimaki_admin Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -22,7 +22,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.26 $
+ * @version  $Revision: 1.27 $
  * @package  switchboard
  */
 
@@ -178,7 +178,7 @@ class SwitchboardSystem extends BitMailer {
 			}
 			// convenience
 			$transport_type = $pParamHash['transport_type'];
-			$recipients = $pParamHash['recipients'];
+			$recipients = !empty($pParamHash['recipients'])?$pParamHash['recipients']:NULL;
 			$users = !empty( $pParamHash['users'] )?$pParamHash['users']:NULL;
 
 			// queue message reference
@@ -213,9 +213,11 @@ class SwitchboardSystem extends BitMailer {
 			else {
 				// display the list of recipients who are not getting the message
 				$recipient_list = '';
-				foreach ($recipients as $recipient) {
-					// if we have users then we'll display their login name, otherwise display the address we were trying to send to
-					$recipient_list .= ( !empty( $users ) ? $recipient['login'] : $recipient[$transport_type] ) . " ";
+				if( !empty( $recipients ) ){
+					foreach ($recipients as $recipient) {
+						// if we have users then we'll display their login name, otherwise display the address we were trying to send to
+						$recipient_list .= ( !empty( $users ) ? $recipient['login'] : $recipient[$transport_type] ) . " ";
+					}
 				}
 				bit_log_error("Delivery Style: ".$transport_type." for users: ". $recipient_list." not registered!");
 			}
