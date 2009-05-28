@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.27 2009/05/12 00:18:19 tekimaki_admin Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.28 2009/05/28 17:32:34 spiderr Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -22,7 +22,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.27 $
+ * @version  $Revision: 1.28 $
  * @package  switchboard
  */
 
@@ -544,8 +544,7 @@ function switchboard_user_expunge(&$pObject, $pHash) {
 	$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_recipients` WHERE `user_id` = ?";
 	$gBitDb->query($query, $bindVars);
 	$query = "SELECT `message_id` FROM `".BIT_DB_PREFIX."switchboard_queue` WHERE `sending_user_id` = ?";
-	$messageIds = $gBitDb->getArray($query, $bindVars);
-	if (count($messageIds)) {
+	if($messageIds = $gBitDb->getArray($query, $bindVars)) {
 		$in = implode(',', array_fill(0, count($messageIds), '?'));
 		$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_recipients` WHERE `message_id` IN (".$in.")";
 		$gBitDb->query($query, $messageIds);
@@ -562,8 +561,7 @@ function switchboard_content_expunge(&$pObject, $pHash) {
 	$pObject->mDb->query($query, $bindVars);
 
 	$query = "SELECT `message_id` FROM `".BIT_DB_PREFIX."switchboard_queue` WHERE `content_id` = ?";
-	$messageIds = $pObject->mDb->getArray($query, $bindVars);
-	if (count($messageIds)) {
+	if( $messageIds = $pObject->mDb->getArray($query, $bindVars) ) {
 		$in = implode(',', array_fill(0, count($messageIds), '?'));
 		$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_recipients` WHERE `message_id` IN (".$in.")";
 		$gBitDb->query($query, $messageIds);
