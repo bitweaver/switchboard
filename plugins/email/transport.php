@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/transport.php,v 1.3 2009/03/31 08:19:52 lsces Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/transport.php,v 1.4 2009/05/30 18:32:51 wjames5 Exp $
  * @package switchboard
  * @subpackage plugins-email
  */
@@ -130,6 +130,7 @@ function transport_email_build_mailer($pMessage) {
 	}
 	$mailer->Host     = $gBitSystem->getConfig( 'bitmailer_servers', $gBitSystem->getConfig( 'kernel_server_name', '127.0.0.1' ) );
 	$mailer->Mailer   = $gBitSystem->getConfig( 'bitmailer_protocol', 'smtp' ); // Alternative to IsSMTP()
+	$mailer->CharSet  = 'UTF-8';
 	if( $gBitSystem->getConfig( 'bitmailer_smtp_username' ) ) {
 		$mailer->SMTPAuth = TRUE;
 		$mailer->Username = $gBitSystem->getConfig( 'bitmailer_smtp_username' );
