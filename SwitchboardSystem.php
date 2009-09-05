@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.29 2009/09/02 14:59:50 wjames5 Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.30 2009/09/05 18:54:31 wjames5 Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -13,7 +13,7 @@
  * | For comments, please use phpdocu.sourceforge.net standards!!!
  * | -> see http://phpdocu.sourceforge.net/
  * +----------------------------------------------------------------------+
- * | Authors: nick <nick@sluggardy.net>
+ * | Authors: nick <nick@sluggardy.net>, will <will@tekimaki.com>
  * +----------------------------------------------------------------------+
  *
  * SwitchboardSystem class
@@ -21,8 +21,8 @@
  * This class represents an abstract switchboard system which packages
  * can use to register things for switchboard and
  *
- * @author   nick <nick@sluggardy.net>
- * @version  $Revision: 1.29 $
+ * @author   nick <nick@sluggardy.net>, will <will@tekimaki.com>
+ * @version  $Revision: 1.30 $
  * @package  switchboard
  */
 
@@ -64,11 +64,14 @@ class SwitchboardSystem extends BitMailer {
 
     /**
 	 * Registers a sender of events.
-	 * $pTypes is the array of event types this package will send.
+	 * @param string $pPackage 	- required package registering the sender
+	 * @param string $pType 	- required sender type the package will send.
+	 * @param array $pParamHash - optional array of options for the sender
 	 *
+	 * @param boolean $pParamHash['include_owner'] - optional flag to load sender preferences for owners of a given content when a content_id is given for an event, see loadEffectivePreferences 
 	 */
-    function registerSender( $pPackage, $pTypes ) {
-		$this->mSenders[$pPackage]['types'] = $pTypes;
+    function registerSender( $pPackage, $pType, $pParamHash = array() ) {
+		$this->mSenders[$pPackage]['types'][$pType] = $pParamHash;
 	}
 
 	/** 
@@ -112,7 +115,7 @@ class SwitchboardSystem extends BitMailer {
 	 *
 	 * $pPackage - The Package sending the message.
 	 * $pEventType - The type of the event.
-	 * $pRecipients - An array of userIds of recipients. If null all with registered preference will be sent a message
+	 * $pRecipients - An array of userIds of recipients. If null all with registered preference and content owners will be sent a message
 	 * $pContentId - The content_id of the object that triggered this message.
 	 * $pDataHash - The message that is being sent.
 	 *				Currently supported are: message and subject
@@ -121,7 +124,7 @@ class SwitchboardSystem extends BitMailer {
 		global $gBitSystem, $gBitUser;
 		$ret = FALSE;
 		// Make sure event is registered so we can do prefs for them. This is for devs really
-		if( !empty($this->mSenders[$pPackage]) && in_array($pEventType, $this->mSenders[$pPackage]['types']) ) {
+		if( !empty($this->mSenders[$pPackage]) && in_array($pEventType, array_keys( $this->mSenders[$pPackage]['types'] )) ) {
 			$msgHash = $pDataHash;
 			$msgHash['package'] = $pPackage;
 			$msgHash['content_id'] = $pContentId;
@@ -296,8 +299,11 @@ class SwitchboardSystem extends BitMailer {
 		// Figure out each users effect prefs
 		$ret = array();
 
-		$ownerPrefs = $this->loadOwnerPrefs( $pContentId );
+		// user preference by content ownership - developer option - see registerSender - makes use of DefaultTransport 
+		$ownerPrefs = !empty( $this->mSenders[$pPackage]['types'][$pEventType]['include_owner'] )?$this->loadOwnerPrefs( $pContentId ):array();
+		// user preferences by package->eventtype
 		$userWatchers = $this->loadUserPrefs($pRecipients, $pPackage, $pEventType);
+		// user preferences by content id
 		$contentWatchers = $this->loadContentPrefs($pRecipients, $pContentId );
 
 		// order is important here to determine who wins. ownerPrefs should be first
@@ -359,7 +365,7 @@ class SwitchboardSystem extends BitMailer {
 	}
 
 	/**
-	 * Loads the preferences for the given recipients, pacakge and event
+	 * Loads the preferences for the given recipients, package and event
 	 * If recipients is null then all users with registered preferences
 	 * are loaded.
 	 */
@@ -410,9 +416,16 @@ class SwitchboardSystem extends BitMailer {
 	function storeUserPref($pUserId, $pPackage, $pEventType, $pContentId = NULL, $pDeliveryStyle = NULL) {
 		$ret = FALSE;
 		if ($this->senderIsRegistered($pPackage, $pEventType)) {
+			// important for how we deal with default deliverystyle
+			$includeOwner = !empty( $this->mSenders[$pPackage]['types'][$pEventType]['include_owner'] );
 			$this->mDb->StartTrans();
 			$this->deleteUserPref($pUserId, $pPackage, $pEventType, $pContentId);
-			if( $pDeliveryStyle != $this->getDefaultTransport() ) {	
+			if( 
+				// not include owner && sytle not none
+				( !$includeOwner && $pDeliveryStyle != 'none' ) ||
+				// include owner && style not default 
+				( $includeOwner && $pDeliveryStyle != $this->getDefaultTransport() )
+				) {	
 				$query = "INSERT INTO `".BIT_DB_PREFIX."switchboard_prefs` (`package`, `event_type`, `user_id`, `content_id`, `delivery_style`) VALUES (?, ?, ?, ?, ?)";
 				$this->mDb->query( $query, array( $pPackage, $pEventType, $pUserId, $pContentId, $pDeliveryStyle ) );
 			}
@@ -428,7 +441,7 @@ class SwitchboardSystem extends BitMailer {
 	 */
 	function senderIsRegistered($pSender, $pType = NULL) {
 		if (!empty($pType)) {
-			return !empty($this->mSenders[$pSender]) && in_array($pType, $this->mSenders[$pSender]['types']);
+			return !empty($this->mSenders[$pSender]) && in_array($pType, array_keys($this->mSenders[$pSender]['types']));
 		}
 		else {
 			return !empty($this->mSenders[$pSender]);

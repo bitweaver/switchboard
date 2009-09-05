@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/store_load_prefs.php,v 1.5 2009/03/31 05:53:55 lsces Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/store_load_prefs.php,v 1.6 2009/09/05 18:54:31 wjames5 Exp $
  * @package switchboard
  * @subpackage functions
  */
@@ -40,13 +40,19 @@ if( !empty($_REQUEST['saveSwitchboardPrefs']) && $gBitUser->isRegistered() ) {
 }
 
 // Get the default preferences
-$prefs = $gSwitchboardSystem->loadUserPrefs( $gBitUser->mUserId );
-
-// Now make it associate the way we want.
+/* @Todo create new method for loading all package=>type prefs of user 
+ * loadUserPrefs is for getting a list of users by package and type 
+ * and its getAssoc is not workable for the need here
+ * but we'll abuse it until its an issue -wjames5
+ */
 $defaults = array();
-if( !empty($prefs) ) {
-	foreach( $prefs as $data ) {
-		$defaults[$data['package']][$data['event_type']] = $data;
+foreach( $gSwitchboardSystem->mSenders as $package=>$data ){ 
+	foreach( $data['types'] as $type=>$opts ){
+		// make it associate the way we want.
+		$prefs = $gSwitchboardSystem->loadUserPrefs( $gBitUser->mUserId, $package, $type );
+		if( !empty( $prefs[$gBitUser->mUserId] ) ){
+			$defaults[$package][$type] = $prefs[$gBitUser->mUserId];
+		}
 	}
 }
 $gBitSmarty->assign('switchboardPrefs', $defaults);

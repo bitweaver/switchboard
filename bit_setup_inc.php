@@ -40,9 +40,10 @@ if( $gBitSystem->isPackageActive( 'switchboard' ) ) {
 	$gSwitchboardSystem = new SwitchboardSystem();
 	$gSwitchboardSystem->loadPlugins();
 
+	// add sender for liberty comment - this is here because of chick and egg with liberty switchboar and themes->loadCSS - this should be in liberty
 	if( $gBitSystem->isPackageActive( 'switchboard' )) {
 		global $gSwitchboardSystem;
-		$gSwitchboardSystem->registerSender( 'My Content', array( 'new comment' ));
+		$gSwitchboardSystem->registerSender( 'My Content', 'new comment', array( 'include_owner' => TRUE ) );
 	}
 
 	// Store it in the context.
@@ -51,4 +52,3 @@ if( $gBitSystem->isPackageActive( 'switchboard' ) ) {
 
 $gBitThemes->loadCss( SWITCHBOARD_PKG_PATH.'switchboard.css' );
 
-?>

@@ -7,6 +7,7 @@
 	{else}
 		{form}
 			{if !empty($switchboardContentId)}<input type="hidden" name="content_id" value="{$switchboardContentId}" />{/if}
+
 			{include file="bitpackage:switchboard/prefs_table.tpl" prefs_table_value_prefix="SBDefault" prefs_data=$switchboardPrefs}
 
 			{if !empty($switchboardContentPrefs)}
