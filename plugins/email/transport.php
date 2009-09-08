@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/transport.php,v 1.4 2009/05/30 18:32:51 wjames5 Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/transport.php,v 1.5 2009/09/08 14:10:56 wjames5 Exp $
  * @package switchboard
  * @subpackage plugins-email
  */
@@ -84,6 +84,7 @@ function transport_email_send( &$pParamHash ){
 	}elseif( is_array( $body ) ){
 		$message = array_merge( $message, $body );
 	}
+	$message['alt_message'] = !empty( $pParamHash['alt_message'] )?$pParamHash['alt_message']:NULL;
 	$mailer = transport_email_build_mailer($message);
 
 	// prep recipients
@@ -180,6 +181,7 @@ function transport_email_build_mailer($pMessage) {
 		}
 	}
 	elseif (!empty($pMessage['alt_message'])) {
+		// although plain text, use Body so that clients reading html by default see the msg. header is correctly set as text/plain
 		$mailer->Body = $pMessage['alt_message'];
 		$mailer->IsHTML( FALSE );
 	}
