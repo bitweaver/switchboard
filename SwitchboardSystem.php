@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.30 2009/09/05 18:54:31 wjames5 Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.31 2009/10/01 13:45:49 wjames5 Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -8,7 +8,7 @@
  * | All Rights Reserved. See copyright.txt for details and a complete
  * | list of authors.
  * | Licensed under the GNU LESSER GENERAL PUBLIC LICENSE.
- * | See license.txt for details
+ * | See http://www.gnu.org/copyleft/lesser.html for details
  * |
  * | For comments, please use phpdocu.sourceforge.net standards!!!
  * | -> see http://phpdocu.sourceforge.net/
@@ -22,7 +22,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>, will <will@tekimaki.com>
- * @version  $Revision: 1.30 $
+ * @version  $Revision: 1.31 $
  * @package  switchboard
  */
 
