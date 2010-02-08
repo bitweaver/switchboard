@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/store_load_prefs.php,v 1.6 2009/09/05 18:54:31 wjames5 Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/store_load_prefs.php,v 1.7 2010/02/08 21:27:26 wjames5 Exp $
  * @package switchboard
  * @subpackage functions
  */
@@ -8,7 +8,7 @@
 /**
  * Initialization
  */
-require_once('../bit_setup_inc.php');
+require_once('../kernel/setup_inc.php');
 
 if( ! $gBitUser->isRegistered() ) {
 	$gBitSystem->setHttpStatus(403);

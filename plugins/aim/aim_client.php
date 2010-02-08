@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/aim_client.php,v 1.3 2009/03/31 08:19:52 lsces Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/aim_client.php,v 1.4 2010/02/08 21:27:26 wjames5 Exp $
  * @package switchboard
  * @subpackage plugins-aim
  */
@@ -17,7 +17,7 @@ $_SERVER['HTTP_USER_AGENT'] = 'console';
 $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
 $_SERVER['SERVER_ADDR'] = '127.0.0.1';
 
-require_once( '../../../bit_setup_inc.php' );
+require_once( '../../../kernel/setup_inc.php' );
 
 require_once( 'Aim.php' );
 
