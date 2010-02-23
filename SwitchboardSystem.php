@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.32 2009/10/01 14:17:05 wjames5 Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.33 2010/02/23 18:59:36 dansut Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -22,7 +22,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>, will <will@tekimaki.com>
- * @version  $Revision: 1.32 $
+ * @version  $Revision: 1.33 $
  * @package  switchboard
  */
 
@@ -215,7 +215,7 @@ class SwitchboardSystem extends BitMailer {
 				bit_log_error("Delivery Style: ".$transport_type." for users: ". $recipient_list." not registered!");
 			}
 		} else {
-			bit_log_error("Attempted to send message of type: ".$transport_type." but it is not registed.");
+			bit_log_error("Attempted to send message but didn't supply a type.");
 		}
 	}	
 
