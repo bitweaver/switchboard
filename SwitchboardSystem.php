@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.33 2010/02/23 18:59:36 dansut Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.34 2010/02/23 19:03:22 dansut Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -22,7 +22,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>, will <will@tekimaki.com>
- * @version  $Revision: 1.33 $
+ * @version  $Revision: 1.34 $
  * @package  switchboard
  */
 
@@ -94,7 +94,7 @@ class SwitchboardSystem extends BitMailer {
 	 **/
 	function loadPlugins(){
 		global $gBitSystem;
-		$pluginLoc = $gBitSystem->getConfig( "switchbaord_plugin_path", SWITCHBOARD_PKG_PATH.'plugins' );
+		$pluginLoc = $gBitSystem->getConfig( "switchboard_plugin_path", SWITCHBOARD_PKG_PATH.'plugins' );
 		if( $plugins = scandir( $pluginLoc ) ) {
 			foreach( $plugins as $pluginDirName ) {
 				$pluginFile = $pluginLoc.'/'.$pluginDirName.'/transport.php';
