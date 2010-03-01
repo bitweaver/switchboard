@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.34 2010/02/23 19:03:22 dansut Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.35 2010/03/01 14:12:35 dansut Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -22,7 +22,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>, will <will@tekimaki.com>
- * @version  $Revision: 1.34 $
+ * @version  $Revision: 1.35 $
  * @package  switchboard
  */
 
@@ -162,7 +162,7 @@ class SwitchboardSystem extends BitMailer {
 	 * @param array $pParamHash['event_type'] optional, required only for message queue
 	 * @param array $pParamHash['package'] optional, required only for message queue
 	 **/
-	function sendMsg( $pParamHash ){
+	function sendMsg( &$pParamHash ){
 		global $gBitSystem;
 
 		if( !empty( $pParamHash['transport_type'] ) ){
@@ -220,7 +220,7 @@ class SwitchboardSystem extends BitMailer {
 	}	
 
 	// convenience function
-	function sendEmail( $pParamHash ){
+	function sendEmail( &$pParamHash ){
 		$pParamHash['transport_type'] = 'email';
 		$this->sendMsg( $pParamHash );
 	}
