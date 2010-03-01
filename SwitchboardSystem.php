@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.35 2010/03/01 14:12:35 dansut Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.36 2010/03/01 14:28:39 dansut Exp $
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -22,7 +22,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>, will <will@tekimaki.com>
- * @version  $Revision: 1.35 $
+ * @version  $Revision: 1.36 $
  * @package  switchboard
  */
 
@@ -30,14 +30,14 @@
  * Initialization
  */
 global $gSwitchboardSystem;
-require_once( KERNEL_PKG_PATH . 'BitMailer.php' );
+require_once( KERNEL_PKG_PATH . 'BitBase.php' );
 
 /**
  * SwitchboardSystem 
  * 
  * @package switchboard
  */
-class SwitchboardSystem extends BitMailer {
+class SwitchboardSystem extends BitBase {
 
 	/**
 	 * Active transport plugins
@@ -59,7 +59,7 @@ class SwitchboardSystem extends BitMailer {
 		// Not much to do here
 		$this->mTransports = array();
 		$this->mSenders = array();
-		LibertyBase::LibertyBase();
+		parent::__construct();
 	}
 
     /**
@@ -467,109 +467,6 @@ class SwitchboardSystem extends BitMailer {
 				}
 			}
 		}
-	}
-}
-
-/** Private! Sends a digest message */
-function switchboard_send_digest($pSwitchboardEvent, $pRecipients) {
-	// For each recipient (we ignore the event triggering the digest)
-	foreach ($pRecipients as $recipient) {
-		$user = new BitUser($recipient);
-		$user->load();
-
-		// Has it been long enough for a digest for this user?
-		$last_digest = $user->getPreference('switchboard_last_digest');
-		if (empty($last_digest)) {
-			$user->storePreference('switchboard_last_digest', $gBitSystem->getUTCTime());
-		}
-		// @TODO: Need to make admin for digest_period
-		else if ($gBitSystem->getUTCTime() >= $last_digest + $user->getPreference('switchboard_digest_period', 24 * 60 * 60)) {
-			// Get all the messages pending for this user
-			$messages = $gSwitchboardSystem->listUserMessages($recipient);
-
-			// This shouldn't be empty because of $pSwitchboardEvent but...
-			if (!empty($messages)) {
-				$deleteVars = array();
-				$message = '';
-
-				// Build up the digest
-				foreach ($messages as $message) {
-					$deleteVars[] = $message['message_id'];
-					$message = $message['message'];
-					$message = "<br/><hr><br/>";
-				}
-
-				// Send the message
-				// @TODO: Make a better title.
-				$mailer = $gSwitchboardSystem->buildMailer(array('subject' => 'Digest From: '.$gBitSystem->getConfig('site_title'),
-																 'message' => $message));
-				$mailer->AddAddress( $user->mInfo['email'], $user->mInfo['login'] );
-				if( !$mailer->Send() ) {
-					$gBitSystem->fatalError("Unable to send notification: " . $mailer->ErrorInfo);
-				}
-
-				// Delete the deliveries from the queue
-				$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_recipients` WHERE `message_id` IN (".(implode(",", array_fill(0,count($deleteVars), "?"))).") AND `user_id` = ?";
-				$deleteVars[] = $recipient;
-				$this->mDb->query($query, $deleteVars);
-
-				// @TODO: Check and update the complete_date
-
-				// And remember the users digest last time.
-				$user->storePreference('switchboard_last_digest', $gBitSystem->getUTCTime());
-			}
-		}
-	}
-}
-
-/** Private! Sends an email message */
-function switchboard_send_email($pMessage, $pRecipients) {
-	global $gSwitchboardSystem, $gBitSystem;
-
-	$mailer = $gSwitchboardSystem->buildMailer($pMessage);
-	/* Send each message one by one. */
-	foreach ($pRecipients as $to) {
-		if( !empty($to['email']) ) {
-			$mailer->AddAddress( $to['email'], empty($to['real_name']) ? $to['login'] : $to['real_name'] );
-			if( !$mailer->Send() ) {
-				bit_log_error( "Switchboard unable to send notification: " . $mailer->ErrorInfo );
-			}
-			$mailer->ClearAddresses();
-		}
-	}
-}
-
-function switchboard_user_expunge(&$pObject, $pHash) {
-	global $gBitDb;
-	$bindVars = array($pObject->mUserId);
-	$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_prefs` WHERE `user_id` = ?";
-	$gBitDb->query($query, $bindVars);
-	$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_recipients` WHERE `user_id` = ?";
-	$gBitDb->query($query, $bindVars);
-	$query = "SELECT `message_id` FROM `".BIT_DB_PREFIX."switchboard_queue` WHERE `sending_user_id` = ?";
-	if($messageIds = $gBitDb->getArray($query, $bindVars)) {
-		$in = implode(',', array_fill(0, count($messageIds), '?'));
-		$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_recipients` WHERE `message_id` IN (".$in.")";
-		$gBitDb->query($query, $messageIds);
-		$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_queue` WHERE `message_id` IN (".$in.")";
-		$gBitDb->query($query, $messageIds);
-	}
-}
-
-function switchboard_content_expunge(&$pObject, $pHash) {
-	global $gBitDb;
-
-	$bindVars = array($pObject->mContentId);
-	$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_prefs` WHERE `content_id` = ?";
-	$pObject->mDb->query($query, $bindVars);
-
-	$query = "SELECT `message_id` FROM `".BIT_DB_PREFIX."switchboard_queue` WHERE `content_id` = ?";
-	if( $messageIds = $pObject->mDb->getArray($query, $bindVars) ) {
-		$in = implode(',', array_fill(0, count($messageIds), '?'));
-		$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_recipients` WHERE `message_id` IN (".$in.")";
-		$gBitDb->query($query, $messageIds);
-		$query = "DELETE FROM `".BIT_DB_PREFIX."switchboard_queue` WHERE `message_id` IN (".$in.")";
-		$gBitDb->query($query, $messageIds);
 	}
 }
 
