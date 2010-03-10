@@ -48,7 +48,17 @@ if( $gBitSystem->isPackageActive( 'switchboard' ) ) {
 
 	// Store it in the context.
 	$gBitSmarty->assign_by_ref( 'gSwitchboardSystem', $gSwitchboardSystem );
+	$gBitThemes->loadCss( SWITCHBOARD_PKG_PATH.'switchboard.css' );
+
+	// make sure all tags from a deleted user are nuked
+	function switchboard_user_expunge( &$pObject ) {
+		if( is_a( $pObject, 'BitUser' ) && !empty( $pObject->mUserId ) ) {
+			$pObject->mDb->StartTrans();
+			$pObject->mDb->query( "DELETE FROM `".BIT_DB_PREFIX."switchboard_prefs` WHERE `user_id`=?", array( $pObject->mUserId ) );
+			$pObject->mDb->CompleteTrans();
+		}
+	}
+
 }
 
-$gBitThemes->loadCss( SWITCHBOARD_PKG_PATH.'switchboard.css' );
 
