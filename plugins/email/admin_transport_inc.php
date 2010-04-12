@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/admin_transport_inc.php,v 1.3 2009/03/31 08:19:52 lsces Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/admin_transport_inc.php,v 1.4 2010/04/12 14:22:49 wjames5 Exp $
  * @package switchboard
  * @subpackage plugins-email
  */
@@ -50,7 +50,7 @@ $gBitSmarty->assign( 'formSwitchboardFeatures',$formSwitchboardFeatures );
 if( !empty( $_POST ) ) {
 
 	foreach( array_keys( $formSwitchboardFeatures ) as $key ) {
-		if( empty( $_REQUEST[$key] ) || $_REQUEST[$key] != $formSwitchboardFeatures[$key]['default'] ) {
+		if( empty( $_REQUEST[$key] ) || $_REQUEST[$key] != $gBitSystem->getConfig( $key ) ) {
 			$gBitSystem->storeConfig( $key, isset( $_REQUEST[$key] ) ? $_REQUEST[$key] : NULL );
 		}
 	}
