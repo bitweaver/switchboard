@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/transport.php,v 1.9 2010/04/12 15:28:05 dansut Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/transport.php,v 1.10 2010/04/12 15:43:44 dansut Exp $
  * @package switchboard
  * @subpackage plugins-email
  */
@@ -86,6 +86,10 @@ function transport_email_send( &$pParamHash ){
 	}
 	$message['alt_message'] = !empty( $pParamHash['alt_message'] )?$pParamHash['alt_message']:NULL;
 	$mailer = transport_email_build_mailer($message);
+
+	// Set these so the caller can know who the created mail(s) will appear to have come from
+	$pParamHash['from'] = $mailer->From;
+	$pParamHash['fromName'] = $mailer->FromName;
 
 	// prep recipients
 	if( is_string( $recipients ) ) {
