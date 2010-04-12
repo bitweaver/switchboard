@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/transport.php,v 1.8 2010/04/12 15:06:37 dansut Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/transport.php,v 1.9 2010/04/12 15:28:05 dansut Exp $
  * @package switchboard
  * @subpackage plugins-email
  */
@@ -79,9 +79,6 @@ function transport_email_send( &$pParamHash ){
 	// assemble the email
 	$message = $headers;
 	$message['subject'] = $subject;
-	// If given set these to override the system defaults
-	if(!empty($pParamHash['from'])) $message['from'] = $pParamHash['from'];
-	if(!empty($pParamHash['from_name'])) $message['from_name'] = $pParamHash['from_name'];
 	if( is_string( $body ) ){
 		$message['message'] = $body;
 	}elseif( is_array( $body ) ){
