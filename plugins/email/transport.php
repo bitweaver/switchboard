@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/transport.php,v 1.10 2010/04/12 15:43:44 dansut Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/transport.php,v 1.11 2010/04/14 19:58:24 wjames5 Exp $
  * @package switchboard
  * @subpackage plugins-email
  */
@@ -122,7 +122,7 @@ function transport_email_send( &$pParamHash ){
  * $pMessage['message'] - The HTML body of the message
  * $pMessage['alt_message'] - The Non HTML body of the message
  */
-function transport_email_build_mailer( &$pMessage ) {
+function transport_email_build_mailer($pMessage) {
 	global $gBitSystem, $gBitLanguage;
 
 	require_once( UTIL_PKG_PATH.'phpmailer/class.phpmailer.php' );
@@ -164,8 +164,8 @@ function transport_email_build_mailer( &$pMessage ) {
 	}
 
 	$mailer->ClearReplyTos();
-	if( !empty( $pMessage['replyto'] ) ) $mailer->AddReplyTo( $pMessage['replyto'] );
-	if( empty( $pMessage['subject'] ) ) {
+	$mailer->AddReplyTo( $gBitSystem->getConfig( 'bitmailer_replyto_email',  $gBitSystem->getConfig( 'bitmailer_sender_email' ) ) );
+	if (empty($pMessage['subject'])) {
 		$mailer->Subject = $gBitSystem->getConfig('site_title', '').
 			(empty($pMessage['package']) ? '' : " : ".$pMessage['package']).
 			(empty($pMessage['type']) ? '' : " : ".$pMessage['type']);

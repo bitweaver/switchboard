@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/admin_transport_inc.php,v 1.4 2010/04/12 14:22:49 wjames5 Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/admin_transport_inc.php,v 1.5 2010/04/14 19:58:24 wjames5 Exp $
  * @package switchboard
  * @subpackage plugins-email
  */
@@ -18,6 +18,10 @@ $formSwitchboardFeatures = array(
 		'label' => 'From Name',
 		'note' => '',
 		'default' => $gBitSystem->getConfig( 'siteTitle' ),
+	),
+	"bitmailer_replyto_email" => array(
+		'label' => 'Reply To Email Address',
+		'note' => 'This will be the reply to address',
 	),
 	"bitmailer_servers" => array(
 		'label' => 'Mail Servers',
