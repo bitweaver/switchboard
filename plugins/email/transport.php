@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/transport.php,v 1.11 2010/04/14 19:58:24 wjames5 Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/transport.php,v 1.12 2010/04/14 20:09:27 wjames5 Exp $
  * @package switchboard
  * @subpackage plugins-email
  */
@@ -164,7 +164,10 @@ function transport_email_build_mailer($pMessage) {
 	}
 
 	$mailer->ClearReplyTos();
-	$mailer->AddReplyTo( $gBitSystem->getConfig( 'bitmailer_replyto_email',  $gBitSystem->getConfig( 'bitmailer_sender_email' ) ) );
+	if( !empty( $pMessage['replyto'] ) || !empty( $gBitSystem->getConfig( 'bitmailer_replyto_email' ) ) ){ 
+		$replyTo = !empty( $pMessage['replyto'] ) ? $pMessage['replyto'] : $gBitSystem->getConfig( 'bitmailer_replyto_email' );
+		$mailer->AddReplyTo( $replyTo );
+	}
 	if (empty($pMessage['subject'])) {
 		$mailer->Subject = $gBitSystem->getConfig('site_title', '').
 			(empty($pMessage['package']) ? '' : " : ".$pMessage['package']).
