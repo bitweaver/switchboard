@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/transport.php,v 1.13 2010/04/14 20:26:27 spiderr Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/transport.php,v 1.14 2010/04/17 03:45:08 wjames5 Exp $
  * @package switchboard
  * @subpackage plugins-email
  */
@@ -65,7 +65,8 @@ function transport_email_receive( $pMsg ){
  * @param array $pParamHash Array of message to be sent
  *
  * @param array $pParamHash['subject'] A string the message subject
- * @param array $pParamHash['message'] A string the message itself aka body
+ * @param array $pParamHash['message'] A HTML string or array of strings, the message itself aka body
+ * @param array $pParamHash['alt_message'] A plain text string, the message itself
  * @param array $pParamHash['headers'] An Array of headers
  * @param array $pParamHash['recipients'] An Array of recipients, where each recipient is an array with key value pair of 'email' => emailaddress
  **/
@@ -73,7 +74,7 @@ function transport_email_send( &$pParamHash ){
 	// convenience
 	$headers = !empty( $pParamHash['headers'] )?$pParamHash['headers']:array();
 	$subject = $pParamHash['subject']; 
-	$body = $pParamHash['message'];
+	$body = !empty( $pParamHash['message'] )? $pParamHash['message'] : NULL;
 	$recipients = $pParamHash['recipients']; 
 
 	// assemble the email
@@ -86,10 +87,6 @@ function transport_email_send( &$pParamHash ){
 	}
 	$message['alt_message'] = !empty( $pParamHash['alt_message'] )?$pParamHash['alt_message']:NULL;
 	$mailer = transport_email_build_mailer($message);
-
-	// Set these so the caller can know who the created mail(s) will appear to have come from
-	$pParamHash['from'] = $mailer->From;
-	$pParamHash['fromName'] = $mailer->FromName;
 
 	// prep recipients
 	if( is_string( $recipients ) ) {
@@ -164,10 +161,7 @@ function transport_email_build_mailer($pMessage) {
 	}
 
 	$mailer->ClearReplyTos();
-	if( !empty( $pMessage['replyto'] ) || $gBitSystem->getConfig( 'bitmailer_replyto_email' ) ){ 
-		$replyTo = !empty( $pMessage['replyto'] ) ? $pMessage['replyto'] : $gBitSystem->getConfig( 'bitmailer_replyto_email' );
-		$mailer->AddReplyTo( $replyTo );
-	}
+	$mailer->AddReplyTo( $gBitSystem->getConfig( 'bitmailer_replyto_email',  $gBitSystem->getConfig( 'bitmailer_sender_email' ) ) );
 	if (empty($pMessage['subject'])) {
 		$mailer->Subject = $gBitSystem->getConfig('site_title', '').
 			(empty($pMessage['package']) ? '' : " : ".$pMessage['package']).
