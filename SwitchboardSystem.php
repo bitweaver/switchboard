@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/SwitchboardSystem.php,v 1.36 2010/03/01 14:28:39 dansut Exp $
+ * @version $Header$
  *
  * +----------------------------------------------------------------------+
  * | Copyright ( c ) 2008, bitweaver.org
@@ -22,7 +22,7 @@
  * can use to register things for switchboard and
  *
  * @author   nick <nick@sluggardy.net>, will <will@tekimaki.com>
- * @version  $Revision: 1.36 $
+ * @version  $Revision$
  * @package  switchboard
  */
 

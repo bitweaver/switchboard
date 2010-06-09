@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/aim_client.php,v 1.4 2010/02/08 21:27:26 wjames5 Exp $
+ * @version $Header$
  * @package switchboard
  * @subpackage plugins-aim
  */

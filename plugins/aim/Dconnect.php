@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/Dconnect.php,v 1.4 2009/03/31 08:19:52 lsces Exp $
+ * @version $Header$
  * @package switchboard
  * @subpackage plugins-aim
  */

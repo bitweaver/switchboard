@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/transport.php,v 1.15 2010/04/17 03:53:02 wjames5 Exp $
+ * @version $Header$
  * @package switchboard
  * @subpackage plugins-email
  */

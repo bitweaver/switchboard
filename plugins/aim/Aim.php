@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/aim/Aim.php,v 1.5 2009/03/31 09:24:21 lsces Exp $
+ * @version $Header$
  *	PHPTOCLIB: A library for AIM connectivity through PHP using the TOC protocal.
  *
  *	This library is free software; you can redistribute it and/or
