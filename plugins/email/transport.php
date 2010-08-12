@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header$
+ * @version $Header: /cvsroot/bitweaver/_bit_switchboard/plugins/email/transport.php,v 1.5 2009/09/08 14:10:56 wjames5 Exp $
  * @package switchboard
  * @subpackage plugins-email
  */
@@ -134,9 +134,15 @@ function transport_email_build_mailer($pMessage) {
 	if( !empty( $pMessage['sender'] ) ) {
 		$mailer->Sender = $pMessage['sender'];
 	}
+	
 	$mailer->Host     = $gBitSystem->getConfig( 'bitmailer_servers', $gBitSystem->getConfig( 'kernel_server_name', '127.0.0.1' ) );
 	$mailer->Mailer   = $gBitSystem->getConfig( 'bitmailer_protocol', 'smtp' ); // Alternative to IsSMTP()
 	$mailer->CharSet  = 'UTF-8';
+
+	if($gBitSystem->getConfig( 'bitmailer_ssl') == 'y'){
+		$mailer->SMTPSecurity   = "ssl"; // secure transfer enabled
+		$mailer->Port     = $gBitSystem->getConfig( 'bitmailer_port', '25' );
+	}
 	if( $gBitSystem->getConfig( 'bitmailer_smtp_username' ) ) {
 		$mailer->SMTPAuth = TRUE;
 		$mailer->Username = $gBitSystem->getConfig( 'bitmailer_smtp_username' );
@@ -165,10 +171,7 @@ function transport_email_build_mailer($pMessage) {
 	}
 
 	$mailer->ClearReplyTos();
-	if( !empty( $pMessage['replyto'] ) || $gBitSystem->getConfig( 'bitmailer_replyto_email' ) ){ 
-		$replyTo = !empty( $pMessage['replyto'] ) ? $pMessage['replyto'] : $gBitSystem->getConfig( 'bitmailer_replyto_email' );
-		$mailer->AddReplyTo( $replyTo );
-	}
+	$mailer->AddReplyTo( !empty( $pMessage['replyto'] )?$pMessage['replyto']:($gBitSystem->getConfig( 'bitmailer_replyto_email',  $gBitSystem->getConfig( 'bitmailer_sender_email' ) )) );
 	if (empty($pMessage['subject'])) {
 		$mailer->Subject = $gBitSystem->getConfig('site_title', '').
 			(empty($pMessage['package']) ? '' : " : ".$pMessage['package']).

@@ -43,13 +43,25 @@ $formSwitchboardFeatures = array(
 		'note' => '',
 		'default' => 'smtp',
 	),
+	"bitmailer_port" => array(
+		'label' => 'Port',
+		'note' => 'Enter the port number of the SMTP server.',
+		'default' => '25',
+	),
 	"bitmailer_word_wrap" => array(
 		'label' => 'Word wrap',
 		'note' => '',
 		'default' => '75',
 	),
 );
+$formSwitchboardChecks = array(
+	"bitmailer_ssl" => array(
+		'label' => 'SSL',
+		'note' => 'Connect to SMTP server using SSL.',
+	),
+);
 $gBitSmarty->assign( 'formSwitchboardFeatures',$formSwitchboardFeatures );
+$gBitSmarty->assign( 'formSwitchboardChecks',$formSwitchboardChecks );
 
 if( !empty( $_POST ) ) {
 
@@ -57,6 +69,9 @@ if( !empty( $_POST ) ) {
 		if( empty( $_REQUEST[$key] ) || $_REQUEST[$key] != $gBitSystem->getConfig( $key ) ) {
 			$gBitSystem->storeConfig( $key, isset( $_REQUEST[$key] ) ? $_REQUEST[$key] : NULL );
 		}
+	}
+	foreach( $formSwitchboardChecks as $item => $data ) {
+		simple_set_toggle( $item, SWITCHBOARD_PKG_NAME );
 	}
 	$gBitSystem->storeConfig( 'switchboard_default_transport', $_REQUEST['switchboard_default_transport'] );
 }
