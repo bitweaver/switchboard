@@ -42,25 +42,13 @@ class SwitchboardSystem extends BitBase {
 	/**
 	 * Active transport plugins
 	 */
-	var $mTransports;
+	var $mTransports = array();
 
 	/**
 	 * The packages registered to send events
 	 */
-	var $mSenders;
+	var $mSenders = array();
 
-
-	/**
-	 * Constructs a SwitchboardSystem. This shouldn't really be called.
-	 * Use the $gSwitchboardSystem instance instead which is created
-	 * for you if you include this file.
-	 */
-	function SwitchboardSystem() {
-		// Not much to do here
-		$this->mTransports = array();
-		$this->mSenders = array();
-		parent::__construct();
-	}
 
     /**
 	 * Registers a sender of events.
