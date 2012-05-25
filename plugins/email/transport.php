@@ -107,7 +107,7 @@ function transport_email_send( &$pParamHash ){
 			}
 			// send
 			if( !$mailer->Send() ) {
-				bit_log_error( $mailer->ErrorInfo );
+				bit_error_log( $mailer->ErrorInfo );
 			}
 			$mailer->ClearAddresses();
 		}
@@ -163,7 +163,7 @@ function transport_email_build_mailer($pMessage) {
 			   XOXO - Nick
 			if( !$mailer->set( $name, $value ) ) {
 				$mailer->$name = $value;
-				bit_log_error( $mailer->ErrorInfo );
+				bit_error_log( $mailer->ErrorInfo );
 			}
 			*/
 			$mailer->AddCustomHeader($name.":".$value);

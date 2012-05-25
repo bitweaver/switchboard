@@ -130,7 +130,7 @@ class SwitchboardSystem extends BitBase {
 			}
 			$ret = TRUE;
 		} else {
-			bit_log_error( "Package: ".$pPackage." attempted to send message of type: ".$pEventType." but didn't register that it wanted to send this type." );
+			bit_error_log( "Package: ".$pPackage." attempted to send message of type: ".$pEventType." but didn't register that it wanted to send this type." );
 		}
 		return $ret;
 	}
@@ -186,7 +186,7 @@ class SwitchboardSystem extends BitBase {
 					if( function_exists($func) ) {
 						$func($pParamHash);
 					} else {
-						bit_log_error("Package: ".$this->mTransports[$transport_type]['package']." registered a non-existant send handler: ".$func);
+						bit_error_log("Package: ".$this->mTransports[$transport_type]['package']." registered a non-existant send handler: ".$func);
 					}
 				}
 			} 
@@ -200,10 +200,10 @@ class SwitchboardSystem extends BitBase {
 						$recipient_list .= ( !empty( $users ) ? $recipient['login'] : $recipient[$transport_type] ) . " ";
 					}
 				}
-				bit_log_error("Delivery Style: ".$transport_type." for users: ". $recipient_list." not registered!");
+				bit_error_log("Delivery Style: ".$transport_type." for users: ". $recipient_list." not registered!");
 			}
 		} else {
-			bit_log_error("Attempted to send message but didn't supply a type.");
+			bit_error_log("Attempted to send message but didn't supply a type.");
 		}
 	}	
 
@@ -450,7 +450,7 @@ class SwitchboardSystem extends BitBase {
 					if( function_exists($func) ) {
 						$func($event, $users);
 					} else {
-						bit_log_error(  tra( "Package registered a non-existant function listener:" )." ".$this->mTransports[$delivery_style]['send_function']." => $func" );
+						bit_error_log(  tra( "Package registered a non-existant function listener:" )." ".$this->mTransports[$delivery_style]['send_function']." => $func" );
 					}
 				}
 			}
