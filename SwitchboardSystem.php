@@ -227,8 +227,7 @@ class SwitchboardSystem extends BitBase {
 		$messageStore['message'] = $event['message'];
 		$messageStore['sending_user_id'] = $gBitUser->mUserId;
 
-		$this->mDb->associateInsert(BIT_DB_PREFIX."switchboard_queue",
-									$messageStore);
+		$this->mDb->associateInsert(BIT_DB_PREFIX."switchboard_queue", $messageStore);
 
 		return $messageStore['message_id'];
 	}
