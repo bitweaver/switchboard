@@ -124,7 +124,7 @@ class SwitchboardSystem extends BitBase {
   			foreach( $usersPrefs as $transportType => $users ) {
 				$msgHash['users'] = $users;
 				$msgHash['transport_type'] = $transportType;
-				$msgHash['use_queue'] = !empty( $this->mTransports[$transportType]['use_queue'] )?TRUE:FALSE;
+				$msgHash['use_queue'] = !empty( $this->mTransports[$transportType]['use_queue'] ) ? TRUE : FALSE;
 				// send the message using the prefered delivery style
 				$this->sendMsg( $msgHash );
 			}
