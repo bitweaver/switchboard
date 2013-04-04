@@ -24,7 +24,7 @@
 {/foreach}
 {/jstabs}
 		<div class="control-group submit">
-			<input type="submit" name="apply" value="{tr}Change preferences{/tr}" />
+			<input type="submit" class="btn" name="apply" value="{tr}Change preferences{/tr}" />
 		</div>
 {/form}
 {/strip}

@@ -24,7 +24,7 @@
 			{/if}
 
 			<div class="control-group submit">
-				<input type="submit" name="saveSwitchboardPrefs" value="Save Preferences" />
+				<input type="submit" class="btn" name="saveSwitchboardPrefs" value="Save Preferences" />
 			</div>
 		{/form}
 	{/if}
