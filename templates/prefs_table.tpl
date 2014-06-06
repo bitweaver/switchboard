@@ -3,7 +3,7 @@
 		{foreach from=$gSwitchboardSystem->mSenders key=package item=types}
 			{legend legend=$package}
 			{foreach from=$types.types key=type item=data name=type}
-			<div class="control-group">
+			<div class="form-group">
 				{formlabel label=$type|capitalize:true}
 				{forminput}	
 				<select name="{$prefs_table_value_prefix}[{$package}][{$type}]">

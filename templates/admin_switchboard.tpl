@@ -4,7 +4,7 @@
 {jstabs}
 	{jstab title="Global Settings"}
 	{legend legend="Global Settings"}
-		<div class="control-group">
+		<div class="form-group">
 			{formlabel label="Default Transport"}
 			{forminput}	
 				<select name="switchboard_default_transport">
@@ -23,7 +23,7 @@
 	{/jstab}
 {/foreach}
 {/jstabs}
-		<div class="control-group submit">
+		<div class="form-group submit">
 			<input type="submit" class="btn btn-default" name="apply" value="{tr}Change preferences{/tr}" />
 		</div>
 {/form}
